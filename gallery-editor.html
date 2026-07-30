@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thoáng Gallery Editor</title>
+  <style>
+    :root{--bg:#160c08;--panel:#21120d;--paper:#eadfd0;--gold:#c89a5b;--line:rgba(255,255,255,.15)}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:#f3e7d8;font-family:Arial,sans-serif;line-height:1.5}
+    main{max-width:1180px;margin:auto;padding:35px 20px 70px}
+    h1{font-family:Georgia,serif;font-size:46px;margin:0 0 8px}
+    .help{color:#c8b7a7;max-width:900px}
+    .panel{margin-top:25px;background:var(--panel);border:1px solid var(--line);padding:22px}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#d2aa77}
+    input,select{width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);background:#160c08;color:white}
+    .full{grid-column:1/-1}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    button{border:0;border-radius:999px;padding:11px 16px;font-weight:bold;cursor:pointer}
+    .primary{background:#ead3ab;color:#24150f}
+    .secondary{background:transparent;color:white;border:1px solid var(--line)}
+    .danger{color:#ffb7b7}
+    .status{min-height:24px;color:#d8bb8e}
+    .gallery-list{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+    .item{border:1px solid var(--line);background:#160c08;padding:10px}
+    .item img{width:100%;height:190px;object-fit:cover;background:#0e0705}
+    .item h3{font-family:Georgia,serif;font-size:18px;margin:10px 0 4px}
+    .item p{font-size:12px;color:#bfae9f;margin:3px 0}
+    .item .actions{margin-top:10px;gap:6px}
+    .item button{font-size:11px;padding:7px 10px}
+    .preview{width:100%;max-height:360px;object-fit:contain;background:#0e0705;margin-top:12px;display:none}
+    .file-note{font-size:12px;color:#bfae9f}
+    @media(max-width:850px){.gallery-list{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:600px){.form-grid,.gallery-list{grid-template-columns:1fr}.full{grid-column:auto}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Thoáng Gallery Editor</h1>
+  <p class="help">Upload, caption, reorder, edit, or delete gallery images. When finished, download <b>gallery-data.js</b>, replace the old file in the website folder, and upload the complete folder to Netlify again.</p>
+
+  <section class="panel">
+    <h2>Add / Edit Image</h2>
+    <input type="hidden" id="editIndex">
+    <div class="form-grid">
+      <label class="full">Choose image files
+        <input id="images" type="file" accept="image/*" multiple>
+      </label>
+      <label>Vietnamese caption
+        <input id="captionVi" placeholder="Không gian tại Thoáng">
+      </label>
+      <label>English caption
+        <input id="captionEn" placeholder="The atmosphere at Thoáng">
+      </label>
+      <label>Image layout
+        <select id="size">
+          <option value="normal">Normal</option>
+          <option value="tall">Tall</option>
+          <option value="wide">Wide</option>
+        </select>
+      </label>
+    </div>
+    <img id="preview" class="preview" alt="Selected image preview">
+    <p class="file-note">You can select several images at once. Multiple images use the same captions initially; edit each one afterward when needed. Recommended: JPEG or WebP, under 1.5 MB each.</p>
+    <div class="actions">
+      <button id="save" class="primary" type="button">Add image(s)</button>
+      <button id="clear" class="secondary" type="button">Clear form</button>
+    </div>
+    <p id="status" class="status" aria-live="polite"></p>
+  </section>
+
+  <section class="panel">
+    <h2>Current Gallery</h2>
+    <div id="galleryList" class="gallery-list"></div>
+    <div class="actions">
+      <button id="download" class="primary" type="button">Download gallery-data.js</button>
+      <button id="importButton" class="secondary" type="button">Import existing file</button>
+      <input id="importFile" type="file" accept=".js,.json" hidden>
+    </div>
+  </section>
+</main>
+
+<script src="gallery-data.js"></script>
+<script>
+  let gallery = Array.isArray(window.THOANG_GALLERY) ? structuredClone(window.THOANG_GALLERY) : [];
+  let uploadedImages = [];
+  const el = id => document.getElementById(id);
+
+  function escapeHtml(text=''){
+    return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  }
+
+  function render(){
+    const box=el('galleryList');
+    box.innerHTML='';
+    if(!gallery.length){box.innerHTML='<p>No gallery images yet.</p>';return;}
+    gallery.forEach((item,index)=>{
+      const card=document.createElement('article');
+      card.className='item';
+      card.innerHTML=`
+        <img src="${item.image}" alt="">
+        <h3>${escapeHtml(item.captionVi || 'Untitled image')}</h3>
+        <p>${escapeHtml(item.captionEn || '')}</p>
+        <p>Layout: ${escapeHtml(item.size || 'normal')}</p>
+        <div class="actions">
+          <button class="secondary edit" data-index="${index}">Edit</button>
+          <button class="secondary up" data-index="${index}" ${index===0?'disabled':''}>↑</button>
+          <button class="secondary down" data-index="${index}" ${index===gallery.length-1?'disabled':''}>↓</button>
+          <button class="secondary remove danger" data-index="${index}">Delete</button>
+        </div>`;
+      box.appendChild(card);
+    });
+    box.querySelectorAll('.edit').forEach(b=>b.addEventListener('click',()=>editItem(Number(b.dataset.index))));
+    box.querySelectorAll('.remove').forEach(b=>b.addEventListener('click',()=>{
+      const index=Number(b.dataset.index);
+      if(confirm('Delete this image from the gallery?')){gallery.splice(index,1);render();}
+    }));
+    box.querySelectorAll('.up').forEach(b=>b.addEventListener('click',()=>{
+      const i=Number(b.dataset.index);if(i>0){[gallery[i-1],gallery[i]]=[gallery[i],gallery[i-1]];render();}
+    }));
+    box.querySelectorAll('.down').forEach(b=>b.addEventListener('click',()=>{
+      const i=Number(b.dataset.index);if(i<gallery.length-1){[gallery[i+1],gallery[i]]=[gallery[i],gallery[i+1]];render();}
+    }));
+  }
+
+  function clearForm(){
+    el('editIndex').value='';
+    el('captionVi').value='';
+    el('captionEn').value='';
+    el('size').value='normal';
+    el('images').value='';
+    el('preview').style.display='none';
+    uploadedImages=[];
+  }
+
+  function editItem(index){
+    const item=gallery[index];
+    el('editIndex').value=String(index);
+    el('captionVi').value=item.captionVi||'';
+    el('captionEn').value=item.captionEn||'';
+    el('size').value=item.size||'normal';
+    uploadedImages=[item.image];
+    el('preview').src=item.image;
+    el('preview').style.display='block';
+    el('save').textContent='Save changes';
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function readFile(file){
+    return new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=()=>resolve(reader.result);
+      reader.onerror=reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  el('images').addEventListener('change',async event=>{
+    const files=[...event.target.files];
+    if(!files.length)return;
+    const oversized=files.filter(f=>f.size>2000000);
+    if(oversized.length) el('status').textContent='Some images are larger than 2 MB and may make the website slow.';
+    uploadedImages=await Promise.all(files.map(readFile));
+    el('preview').src=uploadedImages[0];
+    el('preview').style.display='block';
+  });
+
+  el('save').addEventListener('click',()=>{
+    const editIndex=el('editIndex').value;
+    if(!uploadedImages.length){el('status').textContent='Please choose at least one image.';return;}
+    if(editIndex!==''){
+      const old=gallery[Number(editIndex)];
+      gallery[Number(editIndex)]={
+        ...old,
+        image:uploadedImages[0],
+        captionVi:el('captionVi').value.trim(),
+        captionEn:el('captionEn').value.trim(),
+        size:el('size').value
+      };
+      el('status').textContent='Image updated.';
+    }else{
+      uploadedImages.forEach((image,i)=>{
+        gallery.push({
+          id:'gallery-'+Date.now()+'-'+i,
+          image,
+          captionVi:el('captionVi').value.trim(),
+          captionEn:el('captionEn').value.trim(),
+          size:el('size').value
+        });
+      });
+      el('status').textContent=`${uploadedImages.length} image(s) added.`;
+    }
+    clearForm();
+    el('save').textContent='Add image(s)';
+    render();
+  });
+
+  el('clear').addEventListener('click',()=>{
+    clearForm();
+    el('save').textContent='Add image(s)';
+    el('status').textContent='';
+  });
+
+  el('download').addEventListener('click',()=>{
+    const content='/* Generated by Thoáng Gallery Editor */\nwindow.THOANG_GALLERY = '+JSON.stringify(gallery,null,2)+';\n';
+    const blob=new Blob([content],{type:'text/javascript'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='gallery-data.js';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  el('importButton').addEventListener('click',()=>el('importFile').click());
+  el('importFile').addEventListener('change',async event=>{
+    const file=event.target.files[0];if(!file)return;
+    try{
+      const text=await file.text();
+      const json=text.includes('window.THOANG_GALLERY') ? text.slice(text.indexOf('['),text.lastIndexOf(']')+1) : text;
+      const parsed=JSON.parse(json);
+      if(!Array.isArray(parsed))throw new Error();
+      gallery=parsed;
+      render();
+      el('status').textContent='Existing gallery imported.';
+    }catch{
+      el('status').textContent='Could not read that file.';
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>

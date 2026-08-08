@@ -134,11 +134,80 @@ function activeLanguage() {
 
 
 // Editable food and drinks menu
-const menuData = Array.isArray(window.THOANG_MENU) ? window.THOANG_MENU : [];
+const fallbackMenuData = [
+  {
+    id: 'signature-cocktail',
+    categoryVi: 'Cocktail',
+    categoryEn: 'Cocktails',
+    nameVi: 'Signature Cocktail',
+    nameEn: 'Signature Cocktail',
+    descriptionVi: 'Một lựa chọn đặc trưng được pha tại quầy bar của Thoáng.',
+    descriptionEn: 'A signature creation mixed at the Thoáng bar.',
+    price: 'Liên hệ',
+    image: 'assets/cocktail-3.jpg',
+    available: true
+  },
+  {
+    id: 'light-cocktail',
+    categoryVi: 'Cocktail',
+    categoryEn: 'Cocktails',
+    nameVi: 'Nhẹ & Tinh Tế',
+    nameEn: 'Light & Elegant',
+    descriptionVi: 'Hương vị nhẹ nhàng cho một buổi tối thư thái.',
+    descriptionEn: 'A lighter choice for a relaxed evening.',
+    price: 'Liên hệ',
+    image: 'assets/cocktail-2.jpg',
+    available: true
+  },
+  {
+    id: 'golden-whisper',
+    categoryVi: 'Signature Cocktail',
+    categoryEn: 'Signature Cocktail',
+    nameVi: 'Golden Whisper',
+    nameEn: 'Golden Whisper',
+    descriptionVi: 'Ingredients: Jose Cuervo, Tangerine, Lime, Coconut Foam\nTaste Profile: Bright, Citrusy, Silky',
+    descriptionEn: 'Ingredients: Jose Cuervo, Tangerine, Lime, Coconut Foam\nTaste Profile: Bright, Citrusy, Silky',
+    price: '215,000',
+    image: 'assets/cocktail-1.jpg',
+    available: false
+  }
+];
+window.THOANG_MENU = Array.isArray(window.THOANG_MENU) && window.THOANG_MENU.length ? window.THOANG_MENU : fallbackMenuData;
+let menuData = Array.isArray(window.THOANG_MENU) ? window.THOANG_MENU : fallbackMenuData;
 const menuGrid = document.querySelector('#menuGrid');
 const menuFilter = document.querySelector('#menuFilter');
 const menuEmpty = document.querySelector('#menuEmpty');
 let selectedMenuCategory = 'all';
+
+async function loadMenuData() {
+  if (Array.isArray(window.THOANG_MENU) && window.THOANG_MENU.length) {
+    menuData = window.THOANG_MENU;
+    return menuData;
+  }
+
+  try {
+    const response = await fetch('menu-data.js', { cache: 'no-store' });
+    if (!response.ok) throw new Error(`Failed to load menu data: ${response.status}`);
+
+    const source = await response.text();
+    const result = new Function(`${source}\nreturn window.THOANG_MENU;`)();
+
+    if (Array.isArray(result)) {
+      menuData = result;
+      window.THOANG_MENU = result;
+      return menuData;
+    }
+  } catch (error) {
+    console.warn('Unable to load menu data dynamically.', error);
+  }
+
+  return [];
+}
+
+async function initMenu() {
+  menuData = await loadMenuData();
+  if (menuGrid) renderMenu();
+}
 
 function menuName(item) {
   return activeLanguage() === 'en' ? (item.nameEn || item.nameVi) : (item.nameVi || item.nameEn);
@@ -150,7 +219,16 @@ function menuCategory(item) {
   return activeLanguage() === 'en' ? (item.categoryEn || item.categoryVi || '') : (item.categoryVi || item.categoryEn || '');
 }
 function menuCategoryKey(item) {
-  return (item.categoryEn || item.categoryVi || 'Other').trim().toLowerCase();
+  const categoryEn = String(item.categoryEn || '').trim();
+  const categoryVi = String(item.categoryVi || '').trim();
+  if (!categoryEn && !categoryVi) return 'other';
+  if (!categoryEn) return categoryVi.toLowerCase();
+  if (!categoryVi) return categoryEn.toLowerCase();
+  if (categoryEn.toLowerCase() === categoryVi.toLowerCase()) return categoryEn.toLowerCase();
+  if (categoryVi.toLowerCase().startsWith(categoryEn.toLowerCase()) || categoryEn.toLowerCase().startsWith(categoryVi.toLowerCase())) {
+    return (categoryEn.length >= categoryVi.length ? categoryEn : categoryVi).toLowerCase();
+  }
+  return categoryEn.toLowerCase();
 }
 function renderMenuFilters() {
   if (!menuFilter) return;
@@ -197,7 +275,7 @@ function renderMenu() {
     menuGrid.appendChild(article);
   });
 }
-if (menuGrid) renderMenu();
+if (menuGrid) initMenu();
 
 function eventTitle(item) {
   return activeLanguage() === 'en' ? (item.titleEn || item.titleVi) : (item.titleVi || item.titleEn);

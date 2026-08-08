@@ -178,7 +178,7 @@ footer img{width:92px}
 .menu-filter button.active{background:#e8d3ad;color:#24150f;border-color:#e8d3ad}
 .menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 .menu-item{background:#1b100c;border:1px solid rgba(255,255,255,.14);overflow:hidden}
-.menu-item-media{position:relative;height:330px;background:#281711}.menu-item-media img{height:100%;object-fit:cover}
+.menu-item-media{position:relative;height:330px;background:#281711}.menu-item-media img{width:100%;height:100%;object-fit:contain;object-position:center center;display:block;background:#281711}
 .menu-unavailable{position:absolute;top:14px;right:14px;background:#6f2027;color:white;padding:7px 10px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 .menu-item-copy{padding:22px}.menu-item-meta{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
 .menu-item h3{font-family:"Cormorant Garamond",serif;font-size:31px;line-height:1;margin:0}.menu-price{white-space:nowrap;color:#d9ad73;font-weight:700}

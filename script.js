@@ -17,9 +17,15 @@ if (menu && nav) {
   });
 }
 
+function closeMobileNavMenu() {
+  if (!nav) return;
+  nav.classList.remove('open');
+  if (menu) menu.setAttribute('aria-expanded', 'false');
+}
+
 if (nav) {
   document.querySelectorAll('.nav a').forEach(link => {
-    link.addEventListener('click', () => nav.classList.remove('open'));
+    link.addEventListener('click', closeMobileNavMenu);
   });
 }
 
@@ -39,6 +45,9 @@ function applyLanguage(nextLang = null) {
 if (lang) {
   lang.addEventListener('click', () => {
     applyLanguage();
+    if (window.matchMedia('(max-width: 930px)').matches) {
+      closeMobileNavMenu();
+    }
     window.setTimeout(refreshLocalizedContent, 0);
   });
 }

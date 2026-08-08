@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#170d09">
+  <title>Thoáng Menu | Thoáng Acoustic</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a href="index.html#home" class="brand" aria-label="Thoáng Acoustic home">
+      <img src="assets/logo.jpg" alt="Thoáng Acoustic">
+    </a>
+    <button class="menu-btn" aria-label="Open menu" aria-expanded="false">Menu</button>
+    <nav class="nav">
+      <a href="index.html#about" data-vi="Về Thoáng" data-en="About">Về Thoáng</a>
+      <a href="index.html#music" data-vi="Đêm nhạc" data-en="Live Music">Đêm nhạc</a>
+      <a href="index.html#calendar" data-vi="Lịch sự kiện" data-en="Calendar">Lịch sự kiện</a>
+      <a href="index.html#drinks" data-vi="Cocktails" data-en="Cocktails">Cocktails</a>
+      <a href="menu.html" data-vi="Thực đơn" data-en="Menu">Thực đơn</a>
+      <a href="index.html#gallery" data-vi="Không gian" data-en="Gallery">Không gian</a>
+      <a href="index.html#reservation" data-vi="Đặt bàn" data-en="Reservations">Đặt bàn</a>
+      <button class="lang-btn" type="button">EN</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="menu-page-hero reveal">
+      <p class="kicker" data-vi="THỰC ĐƠN THOÁNG" data-en="THOÁNG MENU">THỰC ĐƠN THOÁNG</p>
+      <h1 data-vi="Một trang riêng cho đồ uống và cảm giác" data-en="A dedicated page for drinks and atmosphere">Một trang riêng cho đồ uống và cảm giác</h1>
+      <p data-vi="Khám phá các danh mục cocktail, xem giá và tìm những lựa chọn phù hợp với buổi tối của bạn trên một trang riêng, sạch và dễ đọc."
+         data-en="Browse cocktail categories, view prices and discover the right option for your evening on a dedicated, clean and readable page.">
+        Khám phá các danh mục cocktail, xem giá và tìm những lựa chọn phù hợp với buổi tối của bạn trên một trang riêng, sạch và dễ đọc.
+      </p>
+    </section>
+
+    <section class="section">
+      <div class="menu-filter reveal" id="menuFilter" aria-label="Menu categories"></div>
+      <div class="menu-grid" id="menuGrid" aria-live="polite"></div>
+      <div class="menu-empty" id="menuEmpty" hidden>
+        <p data-vi="Thực đơn đang được cập nhật." data-en="The menu is being updated.">Thực đơn đang được cập nhật.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <img src="assets/logo.jpg" alt="Thoáng Acoustic logo">
+    <p>© 2026 Thoáng Acoustic</p>
+    <div class="footer-links">
+      <a href="privacy.html" data-vi="Chính sách bảo mật" data-en="Privacy Policy">Chính sách bảo mật</a>
+      <a href="index.html#home" data-vi="Lên đầu trang ↑" data-en="Back to top ↑">Lên đầu trang ↑</a>
+    </div>
+  </footer>
+
+  <script src="./gallery-data.js"></script>
+  <script src="./menu-data.js"></script>
+  <script src="./events-data.js"></script>
+  <script src="./script.js"></script>
+</body>
+</html>

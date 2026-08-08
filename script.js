@@ -33,6 +33,7 @@ function applyLanguage(nextLang = null) {
   if (lang) lang.textContent = currentLanguage === 'vi' ? 'EN' : 'VI';
   if (typeof renderMenu === 'function') renderMenu();
   if (typeof renderGallery === 'function') renderGallery();
+  if (typeof renderCocktails === 'function') renderCocktails();
   if (typeof renderCalendar === 'function') renderCalendar();
 }
 if (lang) {
@@ -126,6 +127,42 @@ if (galleryGrid) {
 
 // Editable event calendar
 const eventData = Array.isArray(window.THOANG_EVENTS) ? window.THOANG_EVENTS : [];
+const COCKTAILS_STORAGE_KEY = 'thoang-cocktails-sync';
+const COCKTAILS_SYNC_EVENT = 'thoang-cocktails-data-updated';
+
+function loadStoredCocktails() {
+  try {
+    if (!window.localStorage) return null;
+    const stored = window.localStorage.getItem(COCKTAILS_STORAGE_KEY);
+    if (!stored) return null;
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch (error) {
+    console.warn('Unable to load stored cocktails.', error);
+    return null;
+  }
+}
+
+function applyCocktailsData(parsedData) {
+  if (!Array.isArray(parsedData)) return false;
+  cocktailsData = parsedData;
+  window.THOANG_COCKTAILS = parsedData;
+  try {
+    if (window.localStorage) {
+      window.localStorage.setItem(COCKTAILS_STORAGE_KEY, JSON.stringify(parsedData));
+    }
+  } catch (error) {
+    console.warn('Unable to save cocktails to local storage.', error);
+  }
+  if (typeof renderCocktails === 'function') renderCocktails();
+  return true;
+}
+
+let cocktailsData = Array.isArray(window.THOANG_COCKTAILS) ? window.THOANG_COCKTAILS : (loadStoredCocktails() || []);
+if (Array.isArray(cocktailsData) && cocktailsData.length) {
+  window.THOANG_COCKTAILS = cocktailsData;
+}
+const cocktailsCards = document.querySelector('#cocktailsCards');
 const calendarGrid = document.querySelector('#calendarGrid');
 const calendarMonth = document.querySelector('#calendarMonth');
 const calendarPrev = document.querySelector('#calendarPrev');
@@ -229,6 +266,7 @@ async function initMenu() {
 function refreshLocalizedContent() {
   if (typeof renderMenu === 'function') renderMenu();
   if (typeof renderGallery === 'function') renderGallery();
+  if (typeof renderCocktails === 'function') renderCocktails();
   if (typeof renderCalendar === 'function') renderCalendar();
 }
 
@@ -314,6 +352,75 @@ function renderMenu() {
 }
 if (menuGrid) initMenu();
 
+function cocktailName(item) {
+  return activeLanguage() === 'en' ? (item.nameEn || item.nameVi) : (item.nameVi || item.nameEn);
+}
+
+function cocktailDescription(item) {
+  return activeLanguage() === 'en' ? (item.descriptionEn || item.descriptionVi || '') : (item.descriptionVi || item.descriptionEn || '');
+}
+
+async function refreshCocktailsData() {
+  const storedCocktails = loadStoredCocktails();
+  if (storedCocktails && JSON.stringify(storedCocktails) !== JSON.stringify(cocktailsData)) {
+    applyCocktailsData(storedCocktails);
+    return;
+  }
+
+  try {
+    const response = await fetch('./cocktails-data.js?' + Date.now(), { cache: 'no-store' });
+    if (!response.ok) return;
+    const source = await response.text();
+    const match = source.match(/window\.THOANG_COCKTAILS\s*=\s*(\[[\s\S]*\])\s*;/);
+    if (!match) return;
+    const parsed = JSON.parse(match[1]);
+    if (!Array.isArray(parsed)) return;
+    if (JSON.stringify(parsed) !== JSON.stringify(cocktailsData)) {
+      applyCocktailsData(parsed);
+    }
+  } catch (error) {
+    console.warn('Unable to refresh cocktail data.', error);
+  }
+}
+
+window.addEventListener('storage', event => {
+  if (event.key === COCKTAILS_STORAGE_KEY && event.newValue) {
+    try {
+      applyCocktailsData(JSON.parse(event.newValue));
+    } catch (error) {
+      console.warn('Unable to apply stored cocktail data.', error);
+    }
+  }
+});
+
+window.addEventListener(COCKTAILS_SYNC_EVENT, event => {
+  const payload = event.detail;
+  if (Array.isArray(payload)) {
+    applyCocktailsData(payload);
+  }
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    refreshCocktailsData();
+  }
+});
+
+function renderCocktails() {
+  if (!cocktailsCards) return;
+  cocktailsCards.innerHTML = '';
+  const items = cocktailsData.slice(0, 3);
+  items.forEach((item, index) => {
+    const article = document.createElement('article');
+    article.className = 'card reveal visible';
+    article.innerHTML = `
+      <img src="${item.image || 'assets/cocktail-1.jpg'}" alt="${cocktailName(item).replaceAll('"','&quot;')}">
+      <div class="card-overlay"></div>
+      <div class="card-text"><span>${String(index + 1).padStart(2, '0')}</span><h3>${cocktailName(item)}</h3></div>`;
+    cocktailsCards.appendChild(article);
+  });
+}
+
 function eventTitle(item) {
   return activeLanguage() === 'en' ? (item.titleEn || item.titleVi) : (item.titleVi || item.titleEn);
 }
@@ -369,6 +476,11 @@ function renderCalendar() {
   renderEventList(upcomingEvents);
 }
 
+if (cocktailsCards) {
+  renderCocktails();
+  refreshCocktailsData();
+  window.setInterval(refreshCocktailsData, 5000);
+}
 renderCalendar();
 
 if (form) {

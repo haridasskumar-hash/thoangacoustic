@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thoáng Cocktail Editor</title>
+  <style>
+    :root{--bg:#160c08;--panel:#21120d;--paper:#eadfd0;--line:rgba(255,255,255,.15)}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:#f3e7d8;font-family:Arial,sans-serif;line-height:1.5}
+    main{max-width:1180px;margin:auto;padding:35px 20px 70px}
+    h1{font-family:Georgia,serif;font-size:46px;margin:0 0 8px}
+    .help{color:#c8b7a7;max-width:900px}
+    .layout{display:grid;grid-template-columns:1fr .9fr;gap:22px;margin-top:26px}
+    .panel{background:var(--panel);border:1px solid var(--line);padding:22px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+    label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#d2aa77}
+    input,textarea{width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);background:#160c08;color:white}
+    textarea{resize:vertical}
+    .full{grid-column:1/-1}
+    .checks{display:flex;gap:20px;flex-wrap:wrap;margin-top:15px}
+    .checks label{display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;color:#f3e7d8}
+    .checks input{width:auto;margin:0}
+    .actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}
+    button{border:0;border-radius:999px;padding:11px 16px;font-weight:bold;cursor:pointer}
+    .primary{background:#ead3ab;color:#24150f}
+    .secondary{background:transparent;color:white;border:1px solid var(--line)}
+    .danger{color:#ffb7b7}
+    .preview{width:100%;max-height:330px;object-fit:contain;background:#0e0705;margin-top:12px;display:none}
+    .status{min-height:24px;color:#d8bb8e}
+    .item{display:grid;grid-template-columns:84px 1fr auto;gap:13px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+    .item img{width:84px;height:104px;object-fit:cover;background:#0e0705}
+    .item h3{font-family:Georgia,serif;font-size:21px;margin:0 0 4px}
+    .item p{font-size:12px;color:#c5b4a6;margin:3px 0}
+    .item button{padding:7px 10px;font-size:11px}
+    .note{font-size:12px;color:#bfae9f}
+    @media(max-width:850px){.layout{grid-template-columns:1fr}}
+    @media(max-width:600px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.item{grid-template-columns:70px 1fr}.item>div:last-child{grid-column:1/-1}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Thoáng Cocktail Editor</h1>
+  <p class="help">Add, edit, delete, reorder and upload images for cocktails. The editor will try to save the updated <b>cocktails-data.js</b> directly to your device; if your browser blocks that, it will download the file instead.</p>
+
+  <div class="layout">
+    <section class="panel">
+      <h2>Add / Edit Cocktail</h2>
+      <input id="editIndex" type="hidden">
+      <div class="grid">
+        <label>Vietnamese name<input id="nameVi"></label>
+        <label>English name<input id="nameEn"></label>
+        <label>Vietnamese category<input id="categoryVi" placeholder="Cocktail đặc trưng"></label>
+        <label>English category<input id="categoryEn" placeholder="Signature"></label>
+        <label>Price<input id="price" placeholder="180.000₫"></label>
+        <label>Image<input id="imageFile" type="file" accept="image/*"></label>
+        <label class="full">Vietnamese ingredients<textarea id="ingredientsVi" rows="2"></textarea></label>
+        <label class="full">English ingredients<textarea id="ingredientsEn" rows="2"></textarea></label>
+        <label class="full">Vietnamese description<textarea id="descriptionVi" rows="3"></textarea></label>
+        <label class="full">English description<textarea id="descriptionEn" rows="3"></textarea></label>
+      </div>
+      <div class="checks">
+        <label><input id="available" type="checkbox" checked> Available</label>
+        <label><input id="featured" type="checkbox"> Featured large card</label>
+      </div>
+      <img id="preview" class="preview" alt="Cocktail image preview">
+      <p class="note">Recommended image size: portrait or square JPEG/WebP under 1.5 MB.</p>
+      <div class="actions">
+        <button id="save" class="primary" type="button">Save cocktail</button>
+        <button id="clear" class="secondary" type="button">Clear form</button>
+      </div>
+      <p id="status" class="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel">
+      <h2>Current Cocktails</h2>
+      <div id="list"></div>
+      <div class="actions">
+        <button id="download" class="primary" type="button">Save cocktails-data.js</button>
+        <button id="importButton" class="secondary" type="button">Import existing file</button>
+        <input id="importFile" type="file" accept=".js,.json" hidden>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="cocktails-data.js"></script>
+<script>
+  let cocktails = Array.isArray(window.THOANG_COCKTAILS) ? structuredClone(window.THOANG_COCKTAILS) : [];
+  let imageData = '';
+  let saveFileHandle = null;
+  const COCKTAILS_STORAGE_KEY = 'thoang-cocktails-sync';
+  const COCKTAILS_SYNC_EVENT = 'thoang-cocktails-data-updated';
+  const el = id => document.getElementById(id);
+
+  function esc(text=''){
+    return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  }
+
+  function buildExportContent(itemsToExport){
+    return '/* Generated by Thoáng Cocktail Editor */\nwindow.THOANG_COCKTAILS = ' + JSON.stringify(itemsToExport, null, 2) + ';\n';
+  }
+
+  function syncCocktailsToBrowser(itemsToSync){
+    try {
+      window.localStorage.setItem(COCKTAILS_STORAGE_KEY, JSON.stringify(itemsToSync));
+      window.dispatchEvent(new CustomEvent(COCKTAILS_SYNC_EVENT, { detail: itemsToSync }));
+    } catch (err) {
+      console.warn('Could not sync cocktail data to this browser session:', err);
+    }
+  }
+
+  async function persistCocktailData(){
+    const content = buildExportContent(cocktails);
+    try {
+      if ('showOpenFilePicker' in window) {
+        const [handle] = await window.showOpenFilePicker({
+          multiple: false,
+          types: [{ description: 'JavaScript file', accept: { 'text/javascript': ['.js'] } }]
+        });
+        saveFileHandle = handle;
+        const writable = await saveFileHandle.createWritable();
+        await writable.write(content);
+        await writable.close();
+        return true;
+      }
+      if ('showSaveFilePicker' in window) {
+        if (!saveFileHandle) {
+          saveFileHandle = await window.showSaveFilePicker({
+            suggestedName: 'cocktails-data.js',
+            types: [{ description: 'JavaScript file', accept: { 'text/javascript': ['.js'] } }]
+          });
+        }
+        const writable = await saveFileHandle.createWritable();
+        await writable.write(content);
+        await writable.close();
+        return true;
+      }
+    } catch (err) {
+      console.warn('Could not save directly to disk:', err);
+    }
+
+    const blob = new Blob([content], { type: 'text/javascript' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'cocktails-data.js';
+    a.click();
+    URL.revokeObjectURL(url);
+    return false;
+  }
+
+  function render(){
+    const list=el('list');list.innerHTML='';
+    if(!cocktails.length){list.innerHTML='<p>No cocktails yet.</p>';return;}
+    cocktails.forEach((item,index)=>{
+      const row=document.createElement('article');
+      row.className='item';
+      row.innerHTML=`
+        <img src="${item.image || 'assets/cocktail-1.jpg'}" alt="">
+        <div>
+          <h3>${esc(item.nameVi || item.nameEn)}</h3>
+          <p>${esc(item.categoryVi || item.categoryEn)} • ${esc(item.price || '')}</p>
+          <p>${item.available===false?'Unavailable':'Available'}${item.featured?' • Featured':''}</p>
+        </div>
+        <div>
+          <button class="secondary edit" data-index="${index}">Edit</button>
+          <button class="secondary up" data-index="${index}" ${index===0?'disabled':''}>↑</button>
+          <button class="secondary down" data-index="${index}" ${index===cocktails.length-1?'disabled':''}>↓</button>
+          <button class="secondary remove danger" data-index="${index}">Delete</button>
+        </div>`;
+      list.appendChild(row);
+    });
+    list.querySelectorAll('.edit').forEach(b=>b.addEventListener('click',()=>editItem(Number(b.dataset.index))));
+    list.querySelectorAll('.remove').forEach(b=>b.addEventListener('click',()=>{
+      const i=Number(b.dataset.index);
+      if(confirm('Delete this cocktail?')){cocktails.splice(i,1);render();}
+    }));
+    list.querySelectorAll('.up').forEach(b=>b.addEventListener('click',()=>{
+      const i=Number(b.dataset.index);if(i>0){[cocktails[i-1],cocktails[i]]=[cocktails[i],cocktails[i-1]];render();}
+    }));
+    list.querySelectorAll('.down').forEach(b=>b.addEventListener('click',()=>{
+      const i=Number(b.dataset.index);if(i<cocktails.length-1){[cocktails[i+1],cocktails[i]]=[cocktails[i],cocktails[i+1]];render();}
+    }));
+  }
+
+  function editItem(index){
+    const item=cocktails[index];
+    el('editIndex').value=String(index);
+    ['nameVi','nameEn','categoryVi','categoryEn','price','ingredientsVi','ingredientsEn','descriptionVi','descriptionEn'].forEach(k=>el(k).value=item[k]||'');
+    el('available').checked=item.available!==false;
+    el('featured').checked=Boolean(item.featured);
+    imageData=item.image||'';
+    if(imageData){el('preview').src=imageData;el('preview').style.display='block';}
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function clearForm(){
+    el('editIndex').value='';
+    ['nameVi','nameEn','categoryVi','categoryEn','price','ingredientsVi','ingredientsEn','descriptionVi','descriptionEn'].forEach(k=>el(k).value='');
+    el('available').checked=true;
+    el('featured').checked=false;
+    el('imageFile').value='';
+    el('preview').style.display='none';
+    imageData='';
+  }
+
+  el('imageFile').addEventListener('change',event=>{
+    const file=event.target.files[0];if(!file)return;
+    if(file.size>2000000)el('status').textContent='This image is larger than 2 MB and may slow down the website.';
+    const reader=new FileReader();
+    reader.onload=()=>{imageData=reader.result;el('preview').src=imageData;el('preview').style.display='block';};
+    reader.readAsDataURL(file);
+  });
+
+  el('save').addEventListener('click', async()=>{
+    if(!el('nameVi').value.trim() && !el('nameEn').value.trim()){el('status').textContent='Please enter a cocktail name.';return;}
+    const item={
+      id:'cocktail-'+Date.now(),
+      nameVi:el('nameVi').value.trim(),
+      nameEn:el('nameEn').value.trim(),
+      categoryVi:el('categoryVi').value.trim(),
+      categoryEn:el('categoryEn').value.trim(),
+      price:el('price').value.trim(),
+      ingredientsVi:el('ingredientsVi').value.trim(),
+      ingredientsEn:el('ingredientsEn').value.trim(),
+      descriptionVi:el('descriptionVi').value.trim(),
+      descriptionEn:el('descriptionEn').value.trim(),
+      image:imageData||'assets/cocktail-1.jpg',
+      available:el('available').checked,
+      featured:el('featured').checked
+    };
+    const index=el('editIndex').value;
+    if(index==='')cocktails.push(item);
+    else{item.id=cocktails[Number(index)].id||item.id;cocktails[Number(index)]=item;}
+    clearForm();render();
+    syncCocktailsToBrowser(cocktails);
+    el('status').textContent='Cocktail saved. Saving the data file…';
+    try {
+      const saved = await persistCocktailData();
+      el('status').textContent = saved ? 'Cocktail saved and cocktails-data.js updated.' : 'Cocktail saved. Downloaded cocktails-data.js.';
+    } catch (err) {
+      el('status').textContent = 'Cocktail saved, but the file could not be written.';
+      console.error(err);
+    }
+  });
+
+  el('clear').addEventListener('click',()=>{clearForm();el('status').textContent='';});
+
+  el('download').addEventListener('click', async()=>{
+    try {
+      const saved = await persistCocktailData();
+      el('status').textContent = saved ? 'Saved cocktails-data.js to your chosen file.' : 'Downloaded cocktails-data.js. Replace the old file in the website folder.';
+    } catch (err) {
+      el('status').textContent = 'Could not save cocktails-data.js.';
+      console.error(err);
+    }
+  });
+
+  el('importButton').addEventListener('click',()=>el('importFile').click());
+  el('importFile').addEventListener('change',async event=>{
+    const file=event.target.files[0];if(!file)return;
+    try{
+      const text=await file.text();
+      const json=text.includes('window.THOANG_COCKTAILS') ? text.slice(text.indexOf('['),text.lastIndexOf(']')+1) : text;
+      const parsed=JSON.parse(json);
+      if(!Array.isArray(parsed))throw new Error();
+      cocktails=parsed;render();syncCocktailsToBrowser(cocktails);el('status').textContent='Existing cocktail list imported.';
+    }catch{el('status').textContent='Could not read that file.';}
+  });
+
+  render();
+</script>
+</body>
+</html>

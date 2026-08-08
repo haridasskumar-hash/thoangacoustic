@@ -176,8 +176,13 @@ footer img{width:92px}
 .menu-filter{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:30px}
 .menu-filter button{border:1px solid rgba(255,255,255,.25);background:transparent;color:#f1e5d5;border-radius:999px;padding:10px 16px;cursor:pointer;font-size:12px;font-weight:700}
 .menu-filter button.active{background:#e8d3ad;color:#24150f;border-color:#e8d3ad}
+.menu-cta{display:flex;flex-direction:column;align-items:flex-start;gap:16px;padding:28px 30px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);max-width:720px}
+.menu-cta p{margin:0;color:#e5d4be;max-width:620px}
 .menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 .menu-item{background:#1b100c;border:1px solid rgba(255,255,255,.14);overflow:hidden}
+.menu-page-hero{padding:80px 0 28px;max-width:760px}
+.menu-page-hero h1{font-family:"Cormorant Garamond",serif;font-size:48px;line-height:1.05;margin:12px 0 16px}
+.menu-page-hero p{font-size:17px;color:#e1cba9;max-width:680px}
 .menu-item-media{position:relative;height:330px;background:#281711}.menu-item-media img{width:100%;height:100%;object-fit:contain;object-position:center center;display:block;background:#281711}
 .menu-unavailable{position:absolute;top:14px;right:14px;background:#6f2027;color:white;padding:7px 10px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 .menu-item-copy{padding:22px}.menu-item-meta{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}

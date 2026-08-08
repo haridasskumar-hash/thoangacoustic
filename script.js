@@ -4,28 +4,43 @@ const nav = document.querySelector('.nav');
 const lang = document.querySelector('.lang-btn');
 const form = document.querySelector('#bookingForm');
 
-window.addEventListener('scroll', () => {
-  header.classList.toggle('scrolled', window.scrollY > 30);
-});
+if (header) {
+  window.addEventListener('scroll', () => {
+    header.classList.toggle('scrolled', window.scrollY > 30);
+  });
+}
 
-menu.addEventListener('click', () => {
-  const open = nav.classList.toggle('open');
-  menu.setAttribute('aria-expanded', String(open));
-});
+if (menu && nav) {
+  menu.addEventListener('click', () => {
+    const open = nav.classList.toggle('open');
+    menu.setAttribute('aria-expanded', String(open));
+  });
+}
 
-document.querySelectorAll('.nav a').forEach(link => {
-  link.addEventListener('click', () => nav.classList.remove('open'));
-});
+if (nav) {
+  document.querySelectorAll('.nav a').forEach(link => {
+    link.addEventListener('click', () => nav.classList.remove('open'));
+  });
+}
 
-let currentLanguage = 'vi';
-lang.addEventListener('click', () => {
-  currentLanguage = currentLanguage === 'vi' ? 'en' : 'vi';
+let currentLanguage = document.documentElement.lang === 'en' ? 'en' : 'vi';
+function applyLanguage(nextLang = null) {
+  currentLanguage = nextLang || (currentLanguage === 'vi' ? 'en' : 'vi');
   document.documentElement.lang = currentLanguage;
   document.querySelectorAll('[data-vi][data-en]').forEach(el => {
-    el.textContent = el.dataset[currentLanguage];
+    el.textContent = el.dataset[currentLanguage] || el.textContent;
   });
-  lang.textContent = currentLanguage === 'vi' ? 'EN' : 'VI';
-});
+  if (lang) lang.textContent = currentLanguage === 'vi' ? 'EN' : 'VI';
+  if (typeof renderMenu === 'function') renderMenu();
+  if (typeof renderGallery === 'function') renderGallery();
+  if (typeof renderCalendar === 'function') renderCalendar();
+}
+if (lang) {
+  lang.addEventListener('click', () => {
+    applyLanguage();
+    window.setTimeout(refreshLocalizedContent, 0);
+  });
+}
 
 const revealObserver = new IntersectionObserver(entries => {
   entries.forEach(entry => {
@@ -120,12 +135,14 @@ const eventCount = document.querySelector('#eventCount');
 const emptyEvents = document.querySelector('#emptyEvents');
 
 let calendarCursor = (() => {
-  const next = eventData
+  const parsed = eventData
     .map(item => new Date(`${item.date}T00:00:00`))
     .filter(date => !Number.isNaN(date.getTime()))
-    .sort((a, b) => a - b)
-    .find(date => date >= new Date(new Date().setHours(0,0,0,0)));
-  return next || new Date();
+    .sort((a, b) => a - b);
+
+  const next = parsed.find(date => date >= new Date(new Date().setHours(0,0,0,0)));
+  const base = next || parsed[parsed.length - 1] || new Date();
+  return new Date(base.getFullYear(), base.getMonth(), 1);
 })();
 
 function activeLanguage() {
@@ -209,26 +226,46 @@ async function initMenu() {
   if (menuGrid) renderMenu();
 }
 
+function refreshLocalizedContent() {
+  if (typeof renderMenu === 'function') renderMenu();
+  if (typeof renderGallery === 'function') renderGallery();
+  if (typeof renderCalendar === 'function') renderCalendar();
+}
+
 function menuName(item) {
   return activeLanguage() === 'en' ? (item.nameEn || item.nameVi) : (item.nameVi || item.nameEn);
 }
 function menuDescription(item) {
   return activeLanguage() === 'en' ? (item.descriptionEn || item.descriptionVi || '') : (item.descriptionVi || item.descriptionEn || '');
 }
+function menuCategoryDisplay(item, language) {
+  const categoryEn = String(item.categoryEn || '').trim();
+  const categoryVi = String(item.categoryVi || '').trim();
+  if (!categoryEn && !categoryVi) return language === 'en' ? 'Other' : 'Khác';
+  if (language === 'en') return categoryEn || categoryVi;
+  return categoryVi || categoryEn;
+}
 function menuCategory(item) {
-  return activeLanguage() === 'en' ? (item.categoryEn || item.categoryVi || '') : (item.categoryVi || item.categoryEn || '');
+  return menuCategoryDisplay(item, activeLanguage());
 }
 function menuCategoryKey(item) {
   const categoryEn = String(item.categoryEn || '').trim();
   const categoryVi = String(item.categoryVi || '').trim();
   if (!categoryEn && !categoryVi) return 'other';
-  if (!categoryEn) return categoryVi.toLowerCase();
-  if (!categoryVi) return categoryEn.toLowerCase();
-  if (categoryEn.toLowerCase() === categoryVi.toLowerCase()) return categoryEn.toLowerCase();
-  if (categoryVi.toLowerCase().startsWith(categoryEn.toLowerCase()) || categoryEn.toLowerCase().startsWith(categoryVi.toLowerCase())) {
-    return (categoryEn.length >= categoryVi.length ? categoryEn : categoryVi).toLowerCase();
+
+  const values = [categoryEn, categoryVi]
+    .filter(Boolean)
+    .map(value => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim());
+
+  if (!values.length) return 'other';
+  if (values.length === 1) return values[0].replace(/\s+/g, '-');
+
+  const [first, second] = values;
+  if (first === second) return first.replace(/\s+/g, '-');
+  if (first.startsWith(second) || second.startsWith(first)) {
+    return (first.length >= second.length ? first : second).replace(/\s+/g, '-');
   }
-  return categoryEn.toLowerCase();
+  return first.replace(/\s+/g, '-');
 }
 function renderMenuFilters() {
   if (!menuFilter) return;
@@ -294,8 +331,11 @@ function formatEventDate(item) {
 }
 
 function renderEventList(events) {
+  if (!eventList || !eventCount || !emptyEvents) return;
   eventList.innerHTML = '';
-  const sorted = [...events].sort((a,b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+  const sorted = [...events]
+    .sort((a,b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time))
+    .slice(0, 3);
   eventCount.textContent = String(sorted.length);
   emptyEvents.hidden = sorted.length > 0;
 
@@ -321,83 +361,29 @@ function renderEventList(events) {
   });
 }
 
-function renderCalendar(selectedDate = '') {
-  const year = calendarCursor.getFullYear();
-  const month = calendarCursor.getMonth();
-  const locale = activeLanguage() === 'en' ? 'en-GB' : 'vi-VN';
-  calendarMonth.textContent = new Intl.DateTimeFormat(locale, {month:'long', year:'numeric'}).format(calendarCursor);
-  calendarGrid.innerHTML = '';
-
-  const first = new Date(year, month, 1);
-  const mondayIndex = (first.getDay() + 6) % 7;
-  const gridStart = new Date(year, month, 1 - mondayIndex);
-
-  for (let i = 0; i < 42; i++) {
-    const day = new Date(gridStart);
-    day.setDate(gridStart.getDate() + i);
-    const dateKey = [
-      day.getFullYear(),
-      String(day.getMonth()+1).padStart(2,'0'),
-      String(day.getDate()).padStart(2,'0')
-    ].join('-');
-    const dayEvents = eventData.filter(item => item.date === dateKey);
-
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'calendar-day';
-    if (day.getMonth() !== month) button.classList.add('outside');
-    if (dayEvents.length) button.classList.add('has-event');
-    if (dateKey === selectedDate) button.classList.add('selected');
-    button.innerHTML = `<span class="calendar-date">${day.getDate()}</span>` +
-      (dayEvents.length ? `<span class="calendar-event-title">${eventTitle(dayEvents[0])}${dayEvents.length > 1 ? ` +${dayEvents.length-1}` : ''}</span><span class="calendar-dot"></span>` : '');
-    if (dayEvents.length) {
-      button.setAttribute('aria-label', `${dateKey}: ${dayEvents.map(eventTitle).join(', ')}`);
-      button.addEventListener('click', () => {
-        document.querySelectorAll('.calendar-day.selected').forEach(el => el.classList.remove('selected'));
-        button.classList.add('selected');
-        renderEventList(dayEvents);
-      });
-    }
-    calendarGrid.appendChild(button);
-  }
-
-  const monthEvents = eventData.filter(item => {
-    const d = new Date(`${item.date}T00:00:00`);
-    return d.getFullYear() === year && d.getMonth() === month;
-  });
-  renderEventList(selectedDate ? eventData.filter(item => item.date === selectedDate) : monthEvents);
+function renderCalendar() {
+  const upcomingEvents = [...eventData]
+    .filter(item => !Number.isNaN(new Date(`${item.date}T00:00:00`).getTime()))
+    .sort((a,b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time))
+    .slice(0, 3);
+  renderEventList(upcomingEvents);
 }
 
-if (calendarGrid) {
-  calendarPrev.addEventListener('click', () => {
-    calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth()-1, 1);
-    renderCalendar();
-  });
-  calendarNext.addEventListener('click', () => {
-    calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth()+1, 1);
-    renderCalendar();
-  });
-  renderCalendar();
-}
+renderCalendar();
 
-// Re-render event labels when language changes.
-if (lang) {
-  lang.addEventListener('click', () => {
-    window.setTimeout(() => { renderCalendar(); renderMenu(); renderGallery(); }, 0);
-  });
-}
-
-form.addEventListener('submit', event => {
-  event.preventDefault();
-  const data = new FormData(form);
-  const subject = encodeURIComponent('Reservation request - Thoáng Acoustic');
-  const body = encodeURIComponent(
+if (form) {
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    const data = new FormData(form);
+    const subject = encodeURIComponent('Reservation request - Thoáng Acoustic');
+    const body = encodeURIComponent(
 `Name: ${data.get('name')}
 Phone: ${data.get('phone')}
 Date: ${data.get('date')}
 Time: ${data.get('time')}
 Guests: ${data.get('guests')}
 Notes: ${data.get('notes') || '-'}`
-  );
-  window.location.href = `mailto:thoangacoustic@gmail.com?subject=${subject}&body=${body}`;
-});
+    );
+    window.location.href = `mailto:thoangacoustic@gmail.com?subject=${subject}&body=${body}`;
+  });
+}

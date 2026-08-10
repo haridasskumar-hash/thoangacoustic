@@ -455,10 +455,13 @@ function renderEventList(events) {
   eventCount.textContent = String(sorted.length);
   emptyEvents.hidden = sorted.length > 0;
 
+  const todayStr = new Date().toISOString().slice(0, 10);
   sorted.forEach(item => {
+    const isToday = item.date === todayStr;
     const article = document.createElement('article');
-    article.className = 'event-item';
+    article.className = 'event-item' + (isToday ? ' event-item--today' : '');
     article.innerHTML = `
+      ${isToday ? '<span class="event-today-badge">TONIGHT</span>' : ''}
       <img src="${item.poster || 'assets/event.jpg'}" alt="${eventTitle(item).replaceAll('"','&quot;')}">
       <div>
         <p class="event-date-label">${formatEventDate(item)} • ${item.time}${item.endTime ? `–${item.endTime}` : ''}</p>
@@ -478,8 +481,12 @@ function renderEventList(events) {
 }
 
 function renderCalendar() {
+  const today = new Date(); today.setHours(0,0,0,0);
   const upcomingEvents = [...eventData]
-    .filter(item => !Number.isNaN(new Date(`${item.date}T00:00:00`).getTime()))
+    .filter(item => {
+      const d = new Date(`${item.date}T00:00:00`);
+      return !Number.isNaN(d.getTime()) && d >= today;
+    })
     .sort((a,b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time))
     .slice(0, 3);
   renderEventList(upcomingEvents);

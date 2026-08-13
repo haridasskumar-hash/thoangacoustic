@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thoáng Blog Editor</title>
+<style>
+:root{--bg:#160c08;--panel:#21120d;--paper:#eadfd0;--line:rgba(255,255,255,.16)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f4e8d8;font-family:Arial,sans-serif;line-height:1.5}
+main{max-width:1200px;margin:auto;padding:32px 18px 70px}h1{font-family:Georgia,serif;font-size:46px;margin:0 0 8px}
+.help{max-width:980px;color:#c9b8a9}.layout{display:grid;grid-template-columns:1.08fr .92fr;gap:22px;margin-top:24px}
+.panel{background:var(--panel);border:1px solid var(--line);padding:21px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.full{grid-column:1/-1}
+label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#d5ad79}
+input,textarea{width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);background:#160c08;color:#fff}
+textarea{resize:vertical}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
+button{border-radius:999px;border:1px solid var(--line);padding:10px 14px;font-weight:bold;cursor:pointer}
+.primary{background:var(--paper);color:#23140e}.secondary{background:transparent;color:#fff}.danger{color:#ffb7b7}
+.preview{width:100%;max-height:280px;object-fit:contain;background:#0e0705;margin-top:10px;display:none}
+.article-images{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.article-image{border:1px solid var(--line);padding:8px;background:#160c08}
+.article-image img{width:100%;height:110px;object-fit:cover}
+.article-image small{display:block;color:#c9b8a9;margin:6px 0}
+.article-image button{font-size:10px;padding:6px 9px;margin:2px}
+.post{display:grid;grid-template-columns:80px 1fr auto;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)}
+.post img{width:80px;height:92px;object-fit:cover}.post p{font-size:12px;color:#c7b6a8;margin:3px 0}.post button{font-size:10px;padding:6px 8px}
+.note{font-size:12px;color:#c9b8a9}.status{min-height:22px;color:#e0bd8d}
+@media(max-width:850px){.layout{grid-template-columns:1fr}}
+@media(max-width:620px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.article-images{grid-template-columns:1fr 1fr}.post{grid-template-columns:65px 1fr}.post>div:last-child{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<main>
+<h1>Thoáng Blog Editor</h1>
+<p class="help">You can now place photos inside the full article, not only as a cover. Upload article images, then use the <b>Insert in Vietnamese</b> or <b>Insert in English</b> button to place the image exactly where your cursor is in the article text.</p>
+
+<div class="layout">
+<section class="panel">
+<h2>Add / Edit Blog Post</h2>
+<input id="editIndex" type="hidden">
+<div class="grid">
+<label>Vietnamese title<input id="titleVi"></label>
+<label>English title<input id="titleEn"></label>
+<label>Date<input id="date" type="date"></label>
+<label class="full">Vietnamese short introduction<textarea id="excerptVi" rows="2"></textarea></label>
+<label class="full">English short introduction<textarea id="excerptEn" rows="2"></textarea></label>
+
+<label class="full">Vietnamese full article
+<textarea id="contentVi" rows="9" placeholder="Write your article. Place the cursor where you want an image, then use Insert in Vietnamese below."></textarea>
+</label>
+
+<label class="full">English full article
+<textarea id="contentEn" rows="9" placeholder="Write your article. Place the cursor where you want an image, then use Insert in English below."></textarea>
+</label>
+
+<label class="full">Cover image
+<input id="cover" type="file" accept="image/*">
+</label>
+</div>
+<img id="coverPreview" class="preview" alt="Cover preview">
+
+<hr style="border:0;border-top:1px solid var(--line);margin:22px 0">
+<h3>Images inside the full article</h3>
+<label>Upload article image(s)
+<input id="articleFiles" type="file" accept="image/*" multiple>
+</label>
+<p class="note">After upload, each image gets buttons to insert a marker such as <b>[[IMAGE:0]]</b> at the cursor position. The website automatically displays the actual image there.</p>
+<div id="articleImages" class="article-images"></div>
+
+<div class="actions">
+<button id="save" class="primary" type="button">Save post</button>
+<button id="clear" class="secondary" type="button">Clear form</button>
+</div>
+<p id="status" class="status" aria-live="polite"></p>
+</section>
+
+<section class="panel">
+<h2>Current Posts</h2>
+<div id="postList"></div>
+<div class="actions">
+<button id="saveFile" class="primary" type="button">Save to blog-data.js</button>
+<button id="linkFile" class="secondary" type="button">Link blog-data.js file</button>
+<button id="importButton" class="secondary" type="button">Import existing file</button>
+<input id="importFile" type="file" accept=".js,.json" hidden>
+</div>
+</section>
+</div>
+</main>
+
+<script src="blog-data.js"></script>
+<script>
+let posts=Array.isArray(window.THOANG_BLOG)?structuredClone(window.THOANG_BLOG):[];
+let coverData='', articleImages=[];
+let blogFileHandle=null;
+const e=id=>document.getElementById(id);
+
+function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
+function readFile(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);});}
+function buildBlogDataContent(){
+  return '/* Generated by Tho\u00e1ng Blog Editor */\\nwindow.THOANG_BLOG = '+JSON.stringify(posts,null,2)+';\\n';
+}
+
+async function chooseBlogFile(){
+  if(typeof window.showOpenFilePicker!=='function') return null;
+  const [handle]=await window.showOpenFilePicker({
+    multiple:false,
+    types:[{description:'JavaScript',accept:{'text/javascript':['.js']}}]
+  });
+  if(!handle) return null;
+  if(handle.name!=='blog-data.js') throw new Error('Please select blog-data.js');
+  return handle;
+}
+
+async function saveBlogDataDirect({askForFile}={askForFile:true}){
+  if(typeof window.showOpenFilePicker!=='function') return false;
+  try{
+    if(!blogFileHandle&&askForFile){
+      blogFileHandle=await chooseBlogFile();
+    }
+    if(!blogFileHandle) return false;
+    const writable=await blogFileHandle.createWritable();
+    await writable.write(buildBlogDataContent());
+    await writable.close();
+    return true;
+  }catch(err){
+    e('status').textContent=err&&err.message?err.message:'Could not write to blog-data.js.';
+    return false;
+  }
+}
+
+function downloadBlogData(){
+  const url=URL.createObjectURL(new Blob([buildBlogDataContent()],{type:'text/javascript'}));
+  const a=document.createElement('a');a.href=url;a.download='blog-data.js';a.click();URL.revokeObjectURL(url);
+}
+
+function insertToken(textareaId,index){
+  const area=e(textareaId);
+  const token=`[[IMAGE:${index}]]`;
+  const start=area.selectionStart??area.value.length;
+  const end=area.selectionEnd??start;
+  const prefix=area.value.slice(0,start);
+  const suffix=area.value.slice(end);
+  const before = prefix && !prefix.endsWith('\\n\\n') ? '\\n\\n' : '';
+  const after = suffix && !suffix.startsWith('\\n\\n') ? '\\n\\n' : '';
+  area.value=prefix+before+token+after+suffix;
+  area.focus();
+}
+
+function renderArticleImages(){
+  const box=e('articleImages');box.innerHTML='';
+  articleImages.forEach((src,index)=>{
+    const card=document.createElement('div');card.className='article-image';
+    card.innerHTML=`<img src="${src}" alt=""><small>Article image ${index+1} — token [[IMAGE:${index}]]</small>
+      <button class="secondary vi" data-i="${index}" type="button">Insert in Vietnamese</button>
+      <button class="secondary en" data-i="${index}" type="button">Insert in English</button>
+      <button class="secondary danger remove-img" data-i="${index}" type="button">Delete image</button>`;
+    box.appendChild(card);
+  });
+  box.querySelectorAll('.vi').forEach(b=>b.onclick=()=>insertToken('contentVi',+b.dataset.i));
+  box.querySelectorAll('.en').forEach(b=>b.onclick=()=>insertToken('contentEn',+b.dataset.i));
+  box.querySelectorAll('.remove-img').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.i;
+    articleImages.splice(i,1);
+    // Renumber tokens after deletion and remove deleted token.
+    ['contentVi','contentEn'].forEach(id=>{
+      let txt=e(id).value.replace(new RegExp(`\\\\[\\\\[IMAGE:${i}\\\\]\\\\]`,'g'),'');
+      for(let n=i+1;n<=articleImages.length;n++){
+        txt=txt.replace(new RegExp(`\\\\[\\\\[IMAGE:${n}\\\\]\\\\]`,'g'),`[[IMAGE:${n-1}]]`);
+      }
+      e(id).value=txt;
+    });
+    renderArticleImages();
+  });
+}
+
+function renderPosts(){
+  const box=e('postList');box.innerHTML='';
+  if(!posts.length){box.innerHTML='<p>No posts yet.</p>';return;}
+  posts.forEach((p,i)=>{
+    const row=document.createElement('div');row.className='post';
+    row.innerHTML=`<img src="${p.coverImage||'assets/event.jpg'}" alt=""><div><b>${esc(p.titleVi||p.titleEn||'Untitled')}</b><p>${esc(p.date||'')}</p><p>${esc(p.excerptVi||p.excerptEn||'')}</p><p>${(p.articleImages||[]).length} article image(s)</p></div><div><button class="secondary edit" data-i="${i}">Edit</button><button class="secondary danger del" data-i="${i}">Delete</button></div>`;
+    box.appendChild(row);
+  });
+  box.querySelectorAll('.edit').forEach(b=>b.onclick=()=>editPost(+b.dataset.i));
+  box.querySelectorAll('.del').forEach(b=>b.onclick=()=>{if(confirm('Delete this post?')){posts.splice(+b.dataset.i,1);renderPosts();}});
+}
+
+function editPost(i){
+  const p=posts[i];
+  e('editIndex').value=i;
+  ['titleVi','titleEn','date','excerptVi','excerptEn','contentVi','contentEn'].forEach(k=>e(k).value=p[k]||'');
+  coverData=p.coverImage||'';
+  articleImages=structuredClone(p.articleImages||[]);
+  if(coverData){e('coverPreview').src=coverData;e('coverPreview').style.display='block';}
+  renderArticleImages();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function clearForm(){
+  e('editIndex').value='';
+  ['titleVi','titleEn','date','excerptVi','excerptEn','contentVi','contentEn'].forEach(k=>e(k).value='');
+  e('cover').value='';e('articleFiles').value='';
+  e('coverPreview').style.display='none';
+  coverData='';articleImages=[];
+  renderArticleImages();
+}
+
+e('cover').addEventListener('change',async ev=>{
+  const f=ev.target.files[0];if(!f)return;
+  if(f.size>2000000)e('status').textContent='Cover image is larger than 2 MB.';
+  coverData=await readFile(f);
+  e('coverPreview').src=coverData;e('coverPreview').style.display='block';
+});
+
+e('articleFiles').addEventListener('change',async ev=>{
+  const files=[...ev.target.files];if(!files.length)return;
+  const oversized=files.filter(f=>f.size>2000000);
+  if(oversized.length)e('status').textContent='Some article images are larger than 2 MB and may slow the website.';
+  const loaded=await Promise.all(files.map(readFile));
+  articleImages.push(...loaded);
+  renderArticleImages();
+  e('articleFiles').value='';
+});
+
+e('save').addEventListener('click',async ()=>{
+  if(!e('titleVi').value.trim()&&!e('titleEn').value.trim()){e('status').textContent='Please enter a title.';return;}
+  if(!e('date').value){e('status').textContent='Please select a date.';return;}
+  const post={
+    id:'blog-'+Date.now(),
+    titleVi:e('titleVi').value.trim(),titleEn:e('titleEn').value.trim(),
+    date:e('date').value,
+    excerptVi:e('excerptVi').value.trim(),excerptEn:e('excerptEn').value.trim(),
+    contentVi:e('contentVi').value.trim(),contentEn:e('contentEn').value.trim(),
+    coverImage:coverData||'assets/event.jpg',
+    articleImages:structuredClone(articleImages)
+  };
+  const i=e('editIndex').value;
+  if(i==='')posts.unshift(post);else{post.id=posts[+i].id||post.id;posts[+i]=post;}
+  const wrote=await saveBlogDataDirect({askForFile:false});
+  e('status').textContent=wrote?'Post saved to blog-data.js.':'Post saved in editor. Click "Save to blog-data.js" to write file.';
+  clearForm();renderPosts();
+});
+e('clear').addEventListener('click',()=>{clearForm();e('status').textContent='';});
+
+e('linkFile').addEventListener('click',async ()=>{
+  if(typeof window.showOpenFilePicker!=='function'){
+    e('status').textContent='Direct save is not supported in this browser. Use Save to blog-data.js (download) instead.';
+    return;
+  }
+  try{
+    blogFileHandle=await chooseBlogFile();
+    e('status').textContent='blog-data.js linked. Future saves can write directly.';
+  }catch(err){
+    e('status').textContent=err&&err.message?err.message:'Could not link blog-data.js.';
+  }
+});
+
+e('saveFile').addEventListener('click',async ()=>{
+  const wrote=await saveBlogDataDirect({askForFile:true});
+  if(wrote){
+    e('status').textContent='blog-data.js updated successfully.';
+  }else if(typeof window.showOpenFilePicker!=='function'){
+    downloadBlogData();
+    e('status').textContent='Direct save is unavailable here. Downloaded blog-data.js instead.';
+  }
+});
+
+e('importButton').addEventListener('click',()=>e('importFile').click());
+e('importFile').addEventListener('change',async ev=>{
+  const f=ev.target.files[0];if(!f)return;
+  try{
+    const text=await f.text();
+    const json=text.includes('window.THOANG_BLOG')?text.slice(text.indexOf('['),text.lastIndexOf(']')+1):text;
+    const parsed=JSON.parse(json);if(!Array.isArray(parsed))throw new Error();
+    posts=parsed;renderPosts();e('status').textContent='Existing blog imported.';
+  }catch{e('status').textContent='Could not read that file.';}
+});
+renderPosts();
+renderArticleImages();
+</script>
+</body>
+</html>

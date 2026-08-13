@@ -126,6 +126,43 @@ footer img{width:92px}
 
 .footer-links{display:flex;align-items:center;gap:22px}.legal-nav{display:flex;align-items:center;gap:18px;font-size:12px;text-transform:uppercase;letter-spacing:.12em}.legal-main{padding:150px 6vw 100px;background:#1a100c;min-height:100vh}.legal-heading{max-width:960px;margin:0 auto 65px;padding-bottom:38px;border-bottom:1px solid var(--line)}.legal-heading h1{font-size:clamp(56px,8vw,105px)}.legal-heading>p:last-child{color:#bba896}.legal-content{max-width:960px;margin:0 auto}.legal-content section{padding:28px 0;border-bottom:1px solid var(--line)}.legal-content h2{font-family:"Cormorant Garamond",serif;font-size:34px;margin:0 0 12px}.legal-content p{color:#cbbcad;margin:0 0 12px}.legal-content a{text-decoration:underline;text-underline-offset:4px}.legal-note{margin-top:45px!important;padding:22px;border:1px solid var(--line);font-size:13px}@media(max-width:620px){.footer-links{flex-direction:column;gap:8px}.legal-main{padding:120px 22px 75px}.legal-content h2{font-size:29px}}
 
+.blog-main{padding:130px 6vw 90px;min-height:100vh;background:#1a100c}
+.blog-hero{max-width:860px;margin:0 auto 44px;text-align:center}
+.blog-hero>p:last-child{max-width:680px;margin:0 auto;color:#cab8a7}
+.blog-list-wrap{max-width:1080px;margin:0 auto}
+.blog-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.blog-card{border:1px solid var(--line);background:#20130e;border-radius:18px;overflow:hidden}
+.blog-open{display:block;width:100%;padding:0;border:0;background:transparent;color:inherit;cursor:pointer;text-align:left}
+.blog-open img{height:250px;object-fit:cover}
+.blog-card-copy{padding:16px 16px 20px}
+.blog-date{font-size:12px;color:#c9a173;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px}
+.blog-card-copy h2{font-size:34px;line-height:1.03;margin:0 0 10px}
+.blog-card-copy p{margin:0;color:#c7b7a8}
+.blog-card-copy span{display:inline-block;margin-top:12px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#e2b97f}
+.blog-empty{text-align:center;color:#bca998;padding:34px 0}
+
+.article-modal{position:fixed;inset:0;z-index:120;background:rgba(8,4,2,.9);display:grid;place-items:center;padding:30px}
+.article-modal[hidden]{display:none}
+.article-shell{width:min(980px,100%);max-height:90vh;overflow:auto;background:#20130e;border:1px solid var(--line);border-radius:18px}
+.article-cover{height:340px;object-fit:cover}
+.article-copy{padding:22px 22px 28px}
+.article-copy h2{margin:.1em 0 .22em}
+.article-body p{margin:0 0 14px;color:#d4c6b8}
+.article-inline-image{margin:16px 0 20px;border-radius:10px;border:1px solid var(--line)}
+.article-close{position:fixed;top:95px;right:24px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:#140b08;color:#fff;font-size:30px;line-height:1;cursor:pointer}
+
+@media(max-width:930px){
+  .blog-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:620px){
+  .blog-main{padding:108px 22px 70px}
+  .blog-list{grid-template-columns:1fr}
+  .blog-open img{height:220px}
+  .article-modal{padding:12px}
+  .article-cover{height:220px}
+  .article-close{top:78px;right:14px}
+}
+
 .menu-coming{background:linear-gradient(135deg,#6f2027 0%,#35120f 55%,#140b08 100%);display:grid;grid-template-columns:1.05fr .95fr;align-items:center;min-height:660px;overflow:hidden}.menu-coming-inner{max-width:760px;position:relative;z-index:2}.menu-coming-inner>p:nth-of-type(2){max-width:680px;color:#dfcfc0}.menu-coming-badge{display:inline-block;margin-top:24px;padding:9px 14px;border:1px solid rgba(255,255,255,.35);border-radius:999px;font-size:11px;letter-spacing:.22em;font-weight:700}.menu-coming-art{height:100%;min-height:520px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;gap:8px;opacity:.2;transform:rotate(-6deg);font-family:"Cormorant Garamond",serif;font-size:clamp(55px,7vw,110px);line-height:.72;white-space:nowrap}.menu-coming-art span:nth-child(even){margin-right:8vw;font-style:italic}@media(max-width:930px){.menu-coming{grid-template-columns:1fr}.menu-coming-art{display:none}}
 
 .calendar-section{background:#eadfd0;color:#24150f}

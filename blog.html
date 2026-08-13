@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#170d09">
+  <meta name="description" content="Thoáng Acoustic Blog — music, artists, cocktails and stories from Hanoi.">
+  <title>Blog | Thoáng Acoustic</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="site-header scrolled">
+  <a href="index.html" class="brand"><img src="assets/logo.jpg" alt="Thoáng Acoustic"></a>
+  <nav class="legal-nav">
+    <a href="index.html" data-vi="Trang chủ" data-en="Home">Trang chủ</a>
+    <a href="privacy.html" data-vi="Chính sách bảo mật" data-en="Privacy Policy">Chính sách bảo mật</a>
+    <button class="lang-btn" type="button">EN</button>
+  </nav>
+</header>
+
+<main class="blog-main">
+  <section class="blog-hero">
+    <p class="kicker" data-vi="NHỮNG CÂU CHUYỆN TỪ THOÁNG" data-en="STORIES FROM THOÁNG">NHỮNG CÂU CHUYỆN TỪ THOÁNG</p>
+    <h1>Blog</h1>
+    <p data-vi="Âm nhạc, nghệ sĩ, cocktail và những câu chuyện phía sau mỗi đêm tại Thoáng."
+       data-en="Music, artists, cocktails and the stories behind each night at Thoáng.">
+       Âm nhạc, nghệ sĩ, cocktail và những câu chuyện phía sau mỗi đêm tại Thoáng.
+    </p>
+  </section>
+  <section class="blog-list-wrap">
+    <div id="blogList" class="blog-list"></div>
+    <p id="blogEmpty" class="blog-empty" hidden data-vi="Bài viết mới sẽ sớm được cập nhật." data-en="New stories will be published soon.">Bài viết mới sẽ sớm được cập nhật.</p>
+  </section>
+</main>
+
+<div id="articleModal" class="article-modal" hidden>
+  <button id="articleClose" class="article-close" type="button" aria-label="Close">×</button>
+  <article class="article-shell">
+    <img id="articleCover" class="article-cover" alt="">
+    <div class="article-copy">
+      <p id="articleDate" class="blog-date"></p>
+      <h2 id="articleTitle"></h2>
+      <div id="articleBody" class="article-body"></div>
+    </div>
+  </article>
+</div>
+
+<footer>
+  <img src="assets/logo.jpg" alt="Thoáng Acoustic">
+  <p>© 2026 Thoáng Acoustic</p>
+  <div class="footer-links">
+    <a href="blog.html">Blog</a>
+    <a href="privacy.html" data-vi="Chính sách bảo mật" data-en="Privacy Policy">Chính sách bảo mật</a>
+    <a href="index.html" data-vi="Trang chủ" data-en="Home">Trang chủ</a>
+  </div>
+</footer>
+
+<script src="blog-data.js"></script>
+<script>
+const posts = Array.isArray(window.THOANG_BLOG) ? window.THOANG_BLOG : [];
+let language = 'vi';
+const list = document.querySelector('#blogList');
+const empty = document.querySelector('#blogEmpty');
+const langBtn = document.querySelector('.lang-btn');
+const modal = document.querySelector('#articleModal');
+const closeBtn = document.querySelector('#articleClose');
+const articleCover = document.querySelector('#articleCover');
+const articleDate = document.querySelector('#articleDate');
+const articleTitle = document.querySelector('#articleTitle');
+const articleBody = document.querySelector('#articleBody');
+
+function pick(post, key){
+  return language === 'en' ? (post[key+'En'] || post[key+'Vi'] || '') : (post[key+'Vi'] || post[key+'En'] || '');
+}
+function safe(text=''){
+  return String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+}
+function dateText(date){
+  const d=new Date(date+'T00:00:00');
+  return new Intl.DateTimeFormat(language==='en'?'en-GB':'vi-VN',{day:'2-digit',month:'long',year:'numeric'}).format(d);
+}
+function renderArticleBody(text, images){
+  articleBody.innerHTML='';
+  const parts=String(text||'').split(/(\[\[IMAGE:\d+\]\])/g);
+  parts.forEach(part=>{
+    const match=part.match(/^\[\[IMAGE:(\d+)\]\]$/);
+    if(match){
+      const idx=Number(match[1]);
+      if(images && images[idx]){
+        const img=document.createElement('img');
+        img.src=images[idx];
+        img.alt=pick({titleVi:'Hình ảnh bài viết',titleEn:'Article image'},'title');
+        img.className='article-inline-image';
+        articleBody.appendChild(img);
+      }
+    }else{
+      part.split(/\n{2,}/).forEach(block=>{
+        if(!block.trim()) return;
+        const p=document.createElement('p');
+        p.textContent=block.trim();
+        articleBody.appendChild(p);
+      });
+    }
+  });
+}
+function openPost(post){
+  articleCover.src=post.coverImage||'assets/event.jpg';
+  articleCover.alt=pick(post,'title');
+  articleDate.textContent=dateText(post.date);
+  articleTitle.textContent=pick(post,'title');
+  renderArticleBody(pick(post,'content'), post.articleImages||[]);
+  modal.hidden=false;
+  document.body.style.overflow='hidden';
+}
+function closePost(){modal.hidden=true;document.body.style.overflow='';}
+function render(){
+  list.innerHTML='';
+  const sorted=[...posts].sort((a,b)=>b.date.localeCompare(a.date));
+  empty.hidden=sorted.length>0;
+  sorted.forEach(post=>{
+    const card=document.createElement('article');
+    card.className='blog-card';
+    card.innerHTML=`
+      <button type="button" class="blog-open">
+        <img src="${post.coverImage||'assets/event.jpg'}" alt="${safe(pick(post,'title'))}" loading="lazy">
+        <div class="blog-card-copy">
+          <p class="blog-date">${dateText(post.date)}</p>
+          <h2>${safe(pick(post,'title'))}</h2>
+          <p>${safe(pick(post,'excerpt'))}</p>
+          <span>${language==='en'?'Read article →':'Đọc bài viết →'}</span>
+        </div>
+      </button>`;
+    card.querySelector('button').addEventListener('click',()=>openPost(post));
+    list.appendChild(card);
+  });
+}
+langBtn.addEventListener('click',()=>{
+  language=language==='vi'?'en':'vi';
+  document.documentElement.lang=language;
+  document.querySelectorAll('[data-vi][data-en]').forEach(el=>el.textContent=el.dataset[language]);
+  langBtn.textContent=language==='vi'?'EN':'VI';
+  render();
+});
+closeBtn.addEventListener('click',closePost);
+modal.addEventListener('click',e=>{if(e.target===modal)closePost();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden)closePost();});
+render();
+</script>
+</body>
+</html>

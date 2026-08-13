@@ -363,7 +363,7 @@ window.THOANG_MENU = [
   {
     "id": "menu-1786187287701",
     "categoryVi": "Nước ép tươi",
-    "categoryEn": "Fresh Juice",
+    "categoryEn": "Fresh Juices",
     "nameVi": "Nước ép táo",
     "nameEn": "Apple Juice",
     "descriptionVi": "",

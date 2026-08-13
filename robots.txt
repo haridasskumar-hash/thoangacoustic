@@ -1,4 +1,10 @@
 User-agent: *
 Allow: /
 
+# Keep internal content-management pages out of search results
+Disallow: /cocktail-editor.html
+Disallow: /event-editor.html
+Disallow: /gallery-editor.html
+Disallow: /menu-editor.html
+
 Sitemap: https://www.thoangacoustic.com/sitemap.xml

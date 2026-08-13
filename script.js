@@ -446,6 +446,13 @@ function formatEventDate(item) {
   return new Intl.DateTimeFormat(locale, {weekday:'short', day:'2-digit', month:'short', year:'numeric'}).format(date);
 }
 
+function localDateKey(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 function renderEventList(events) {
   if (!eventList || !eventCount || !emptyEvents) return;
   eventList.innerHTML = '';
@@ -455,7 +462,7 @@ function renderEventList(events) {
   eventCount.textContent = String(sorted.length);
   emptyEvents.hidden = sorted.length > 0;
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = localDateKey();
   sorted.forEach(item => {
     const isToday = item.date === todayStr;
     const article = document.createElement('article');

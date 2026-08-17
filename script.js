@@ -1,7 +1,7 @@
 const header = document.querySelector('.site-header');
 const menu = document.querySelector('.menu-btn');
 const nav = document.querySelector('.nav');
-const lang = document.querySelector('.lang-btn');
+const langButtons = document.querySelectorAll('.lang-btn');
 const form = document.querySelector('#bookingForm');
 
 if (header) {
@@ -36,21 +36,21 @@ function applyLanguage(nextLang = null) {
   document.querySelectorAll('[data-vi][data-en]').forEach(el => {
     el.textContent = el.dataset[currentLanguage] || el.textContent;
   });
-  if (lang) lang.textContent = currentLanguage === 'vi' ? 'EN' : 'VI';
+  langButtons.forEach(btn => { btn.textContent = currentLanguage === 'vi' ? 'EN' : 'VI'; });
   if (typeof renderMenu === 'function') renderMenu();
   if (typeof renderGallery === 'function') renderGallery();
   if (typeof renderCocktails === 'function') renderCocktails();
   if (typeof renderCalendar === 'function') renderCalendar();
 }
-if (lang) {
-  lang.addEventListener('click', () => {
+langButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
     applyLanguage();
     if (window.matchMedia('(max-width: 930px)').matches) {
       closeMobileNavMenu();
     }
     window.setTimeout(refreshLocalizedContent, 0);
   });
-}
+});
 
 const revealObserver = new IntersectionObserver(entries => {
   entries.forEach(entry => {

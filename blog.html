@@ -4,8 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#170d09">
+  <meta name="robots" content="index,follow,max-snippet:160,max-image-preview:large,max-video-preview:-1">
   <meta name="description" content="Thoáng Acoustic Blog — music, artists, cocktails and stories from Hanoi.">
   <link rel="canonical" href="https://www.thoangacoustic.com/blog.html">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.thoangacoustic.com/blog.html">
+  <meta property="og:title" content="Blog | Thoáng Acoustic">
+  <meta property="og:description" content="Music, artists, cocktails and stories from Thoáng Acoustic in Hanoi.">
+  <meta property="og:image" content="https://www.thoangacoustic.com/assets/interior-4.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Blog | Thoáng Acoustic">
+  <meta name="twitter:description" content="Music, artists, cocktails and stories from Thoáng Acoustic in Hanoi.">
+  <meta name="twitter:image" content="https://www.thoangacoustic.com/assets/interior-4.jpg">
   <title>Blog | Thoáng Acoustic</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,6 +44,9 @@
   <section class="blog-list-wrap">
     <div id="blogList" class="blog-list"></div>
     <p id="blogEmpty" class="blog-empty" hidden data-vi="Bài viết mới sẽ sớm được cập nhật." data-en="New stories will be published soon.">Bài viết mới sẽ sớm được cập nhật.</p>
+    <noscript>
+      <p>JavaScript is required to load the full article list. Visit again with JavaScript enabled to view all blog posts.</p>
+    </noscript>
   </section>
 </main>
 
@@ -60,6 +73,20 @@
 </footer>
 
 <script src="blog-data.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Blog",
+  "name": "Thoang Acoustic Blog",
+  "url": "https://www.thoangacoustic.com/blog.html",
+  "inLanguage": ["vi", "en"],
+  "publisher": {
+    "@type": "BarOrPub",
+    "name": "Thoang Acoustic",
+    "url": "https://www.thoangacoustic.com/"
+  }
+}
+</script>
 <script>
 const posts = Array.isArray(window.THOANG_BLOG) ? window.THOANG_BLOG : [];
 let language = 'vi';
@@ -121,6 +148,14 @@ function render(){
   list.innerHTML='';
   const sorted=[...posts].sort((a,b)=>b.date.localeCompare(a.date));
   empty.hidden=sorted.length>0;
+  if(!sorted.length){
+    return;
+  }
+
+  const latest = sorted[0];
+  const pageTitle = pick(latest,'title') ? `${pick(latest,'title')} | Blog | Thoáng Acoustic` : 'Blog | Thoáng Acoustic';
+  document.title = pageTitle;
+
   sorted.forEach(post=>{
     const card=document.createElement('article');
     card.className='blog-card';

@@ -316,7 +316,7 @@ window.THOANG_EVENTS = [
     "id": "event-1788089876975",
     "titleVi": "PHOTOGRAPH — ĐÊM TÌNH CA US-UK TỐI THỨ 3 (01/09) 📸🎸",
     "titleEn": "PHOTOGRAPH — US-UK LOVE SONG NIGHT | TUESDAY EVENING (01/09) 📸🎸",
-    "date": "2026-08-31",
+    "date": "2026-09-01",
     "time": "20:45",
     "endTime": "22:15",
     "artists": "Ho Tieu Linh & Minh Hieu",

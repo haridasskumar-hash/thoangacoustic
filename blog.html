@@ -159,8 +159,12 @@ function render(){
   sorted.forEach(post=>{
     const card=document.createElement('article');
     card.className='blog-card';
+    const openTag = post.url
+      ? `<a class="blog-open" href="${safe(post.url)}">`
+      : '<button type="button" class="blog-open">';
+    const closeTag = post.url ? '</a>' : '</button>';
     card.innerHTML=`
-      <button type="button" class="blog-open">
+      ${openTag}
         <img src="${post.coverImage||'assets/event.jpg'}" alt="${safe(pick(post,'title'))}" loading="lazy">
         <div class="blog-card-copy">
           <p class="blog-date">${dateText(post.date)}</p>
@@ -168,8 +172,9 @@ function render(){
           <p>${safe(pick(post,'excerpt'))}</p>
           <span>${language==='en'?'Read article →':'Đọc bài viết →'}</span>
         </div>
-      </button>`;
-    card.querySelector('button').addEventListener('click',()=>openPost(post));
+      ${closeTag}`;
+    const button = card.querySelector('button');
+    if(button) button.addEventListener('click',()=>openPost(post));
     list.appendChild(card);
   });
 }

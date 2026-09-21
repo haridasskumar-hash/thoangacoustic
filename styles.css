@@ -136,7 +136,7 @@ footer img{width:92px}
 .blog-list-wrap{max-width:1080px;margin:0 auto}
 .blog-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
 .blog-card{border:1px solid var(--line);background:#20130e;border-radius:18px;overflow:hidden}
-.blog-open{display:block;width:100%;padding:0;border:0;background:transparent;color:inherit;cursor:pointer;text-align:left}
+.blog-open{display:block;width:100%;padding:0;border:0;background:transparent;color:inherit;cursor:pointer;text-align:left;text-decoration:none}
 .blog-open img{height:250px;object-fit:cover}
 .blog-card-copy{padding:16px 16px 20px}
 .blog-date{font-size:12px;color:#c9a173;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px}

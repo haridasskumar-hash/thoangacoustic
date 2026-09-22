@@ -576,7 +576,7 @@ window.THOANG_EVENTS = [
     "id": "event-1790065286196",
     "titleVi": "ÁNH TRĂNG NÓI HỘ LÒNG TÔI — ĐÊM NHẠC BALLAD TỐI THỨ 3 (22/09) 🌙🎙️🎹",
     "titleEn": "THE MOON SPEAKS FOR MY HEART — BALLAD NIGHT ON TUESDAY EVENING (22/09) 🌙🎙️🎹",
-    "date": "2026-09-23",
+    "date": "2026-09-22",
     "time": "20:45",
     "endTime": "22:15",
     "artists": "🎤 VOCAL: Lưu Đức Anh | 🎹 KEYBOARD: Nhật Quang",

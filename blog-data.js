@@ -28,5 +28,15 @@ window.THOANG_BLOG = [
     "excerptEn": "Discover Mandarin and Cantonese live music nights at Thoáng Acoustic in Hanoi.",
     "coverImage": "Article/CN1.png",
     "url": "Article/Thoang-Live-Music-VI-EN-ZH.html"
+  },
+  {
+    "id": "thoang-live-music-signature-drinks",
+    "titleVi": "Nhạc live tại Thoáng Acoustic",
+    "titleEn": "Live Music at Thoáng Acoustic",
+    "date": "2026-10-05",
+    "excerptVi": "Trải nghiệm những đêm nhạc live và không gian acoustic ấm cúng tại Thoáng Acoustic, Hà Nội.",
+    "excerptEn": "Experience live music and an intimate acoustic atmosphere at Thoáng Acoustic in Hanoi.",
+    "coverImage": "assets/cocktail-3.jpg",
+    "url": "Article/Thoang-Live-Music-Signature-Drinks.html"
   }
 ];

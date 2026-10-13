@@ -66,7 +66,7 @@ document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
 
 // Editable image gallery
-const galleryData = Array.isArray(window.THOANG_GALLERY) ? window.THOANG_GALLERY : [];
+let galleryData = Array.isArray(window.THOANG_GALLERY) ? window.THOANG_GALLERY : [];
 const galleryGrid = document.querySelector('#galleryGrid');
 const galleryEmpty = document.querySelector('#galleryEmpty');
 const galleryLightbox = document.querySelector('#galleryLightbox');
@@ -133,9 +133,46 @@ if (galleryGrid) {
   });
 }
 
+function loadPageDataScript(src, globalName) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = () => {
+      const data = window[globalName];
+      if (!Array.isArray(data)) {
+        reject(new Error(`Invalid data in ${src}`));
+        return;
+      }
+      resolve(data);
+    };
+    script.onerror = () => reject(new Error(`Unable to load ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+function loadWhenNear(element, load) {
+  const observer = new IntersectionObserver(entries => {
+    if (!entries.some(entry => entry.isIntersecting)) return;
+    observer.disconnect();
+    load();
+  }, { rootMargin: '500px 0px' });
+  observer.observe(element);
+}
+
+if (galleryGrid) {
+  loadWhenNear(galleryGrid, () => {
+    loadPageDataScript('./gallery-data.js', 'THOANG_GALLERY')
+      .then(data => {
+        galleryData = data;
+        renderGallery();
+      })
+      .catch(error => console.warn('Unable to load gallery data.', error));
+  });
+}
+
 
 // Editable event calendar
-const eventData = Array.isArray(window.THOANG_EVENTS) ? window.THOANG_EVENTS : [];
+let eventData = Array.isArray(window.THOANG_EVENTS) ? window.THOANG_EVENTS : [];
 const COCKTAILS_STORAGE_KEY = 'thoang-cocktails-sync';
 const COCKTAILS_SYNC_EVENT = 'thoang-cocktails-data-updated';
 
@@ -168,6 +205,7 @@ function applyCocktailsData(parsedData) {
 }
 
 let cocktailsData = Array.isArray(window.THOANG_COCKTAILS) ? window.THOANG_COCKTAILS : (loadStoredCocktails() || []);
+let cocktailsDataRequested = false;
 if (Array.isArray(cocktailsData) && cocktailsData.length) {
   window.THOANG_COCKTAILS = cocktailsData;
 }
@@ -180,16 +218,7 @@ const eventList = document.querySelector('#eventList');
 const eventCount = document.querySelector('#eventCount');
 const emptyEvents = document.querySelector('#emptyEvents');
 
-let calendarCursor = (() => {
-  const parsed = eventData
-    .map(item => new Date(`${item.date}T00:00:00`))
-    .filter(date => !Number.isNaN(date.getTime()))
-    .sort((a, b) => a - b);
-
-  const next = parsed.find(date => date >= new Date(new Date().setHours(0,0,0,0)));
-  const base = next || parsed[parsed.length - 1] || new Date();
-  return new Date(base.getFullYear(), base.getMonth(), 1);
-})();
+let calendarCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
 function activeLanguage() {
   return document.documentElement.lang === 'en' ? 'en' : 'vi';
@@ -377,13 +406,14 @@ async function refreshCocktailsData() {
   }
 
   try {
-    const response = await fetch('./cocktails-data.js?' + Date.now(), { cache: 'no-store' });
-    if (!response.ok) return;
+    const response = await fetch('./cocktails-data.js', { cache: 'no-cache' });
+    if (!response.ok) throw new Error(`Failed to load cocktail data: ${response.status}`);
     const source = await response.text();
     const match = source.match(/window\.THOANG_COCKTAILS\s*=\s*(\[[\s\S]*\])\s*;/);
-    if (!match) return;
+    if (!match) throw new Error('Invalid cocktail data format.');
     const parsed = JSON.parse(match[1]);
-    if (!Array.isArray(parsed)) return;
+    if (!Array.isArray(parsed)) throw new Error('Cocktail data must be an array.');
+    cocktailsDataRequested = true;
     if (JSON.stringify(parsed) !== JSON.stringify(cocktailsData)) {
       applyCocktailsData(parsed);
     }
@@ -410,7 +440,7 @@ window.addEventListener(COCKTAILS_SYNC_EVENT, event => {
 });
 
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
+  if (document.visibilityState === 'visible' && cocktailsDataRequested) {
     refreshCocktailsData();
   }
 });
@@ -423,7 +453,7 @@ function renderCocktails() {
     const article = document.createElement('article');
     article.className = 'card reveal visible';
     article.innerHTML = `
-      <img src="${item.image || 'assets/cocktail-1.jpg'}" alt="${cocktailName(item).replaceAll('"','&quot;')}">
+      <img src="${item.image || 'assets/cocktail-1.jpg'}" alt="${cocktailName(item).replaceAll('"','&quot;')}" loading="lazy" decoding="async">
       <div class="card-overlay"></div>
       <div class="card-text"><span>${String(index + 1).padStart(2, '0')}</span><h3>${cocktailName(item)}</h3></div>`;
     cocktailsCards.appendChild(article);
@@ -469,7 +499,7 @@ function renderEventList(events) {
     article.className = 'event-item' + (isToday ? ' event-item--today' : '');
     article.innerHTML = `
       ${isToday ? '<span class="event-today-badge">TONIGHT</span>' : ''}
-      <img src="${item.poster || 'assets/event.jpg'}" alt="${eventTitle(item).replaceAll('"','&quot;')}">
+      <img src="${item.poster || 'assets/event.jpg'}" alt="${eventTitle(item).replaceAll('"','&quot;')}" loading="lazy" decoding="async">
       <div>
         <p class="event-date-label">${formatEventDate(item)} • ${item.time}${item.endTime ? `–${item.endTime}` : ''}</p>
         <h4>${eventTitle(item)}</h4>
@@ -501,10 +531,28 @@ function renderCalendar() {
 
 if (cocktailsCards) {
   renderCocktails();
-  refreshCocktailsData();
-  window.setInterval(refreshCocktailsData, 5000);
+  loadWhenNear(cocktailsCards, () => {
+    cocktailsDataRequested = true;
+    refreshCocktailsData();
+    window.setInterval(() => {
+      if (document.visibilityState === 'visible') refreshCocktailsData();
+    }, 60000);
+  });
 }
-renderCalendar();
+if (eventList) {
+  renderCalendar();
+  loadWhenNear(eventList, () => {
+    loadPageDataScript('./events-data.js', 'THOANG_EVENTS')
+      .then(data => {
+        eventData = data;
+        renderCalendar();
+      })
+      .catch(error => {
+        console.warn('Unable to load event data.', error);
+        renderCalendar();
+      });
+  });
+}
 
 if (form) {
   form.addEventListener('submit', event => {

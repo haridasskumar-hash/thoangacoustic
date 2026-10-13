@@ -758,7 +758,7 @@ window.THOANG_EVENTS = [
     "id": "event-1791879968220",
     "titleVi": "I’M NOT THE ONLY ONE — ĐÊM NHẠC US-UK TỐI THỨ BA (13/10) 🥀🎸🎤",
     "titleEn": "I’M NOT THE ONLY ONE — US-UK MUSIC NIGHT THIS TUESDAY (13/10) 🥀🎸🎤",
-    "date": "2026-10-14",
+    "date": "2026-10-13",
     "time": "20:30",
     "endTime": "22:30",
     "artists": "Ho Tieu Linh & Minh Hieu",

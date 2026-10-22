@@ -26,14 +26,14 @@ html = html.replace(/\s*<link rel="alternate" hreflang="[^"]*"[^>]*>/g, '');
 html = html.replace(/\s*<link rel="amphtml"[^>]*>/, '');
 html = html.replace(
   '<link rel="canonical" href="https://www.thoangacoustic.com/">',
-  '<link rel="canonical" href="https://www.thoangacoustic.com/en">\n' +
-  '  <link rel="alternate" hreflang="en" href="https://www.thoangacoustic.com/en">\n' +
+  '<link rel="canonical" href="https://www.thoangacoustic.com/en/">\n' +
+  '  <link rel="alternate" hreflang="en" href="https://www.thoangacoustic.com/en/">\n' +
   '  <link rel="alternate" hreflang="vi" href="https://www.thoangacoustic.com/">\n' +
   '  <link rel="alternate" hreflang="x-default" href="https://www.thoangacoustic.com/">'
 );
 html = html.replace(
   '<meta property="og:url" content="https://www.thoangacoustic.com/">',
-  '<meta property="og:url" content="https://www.thoangacoustic.com/en">'
+  '<meta property="og:url" content="https://www.thoangacoustic.com/en/">'
 );
 
 fs.mkdirSync('en', { recursive: true });

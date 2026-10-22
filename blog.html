@@ -183,7 +183,7 @@ function render(){
 }
 langBtn.addEventListener('click',()=>{
   const nextLanguage=langBtn.textContent.trim()==='EN'?'en':'vi';
-  window.location.assign(nextLanguage==='en'?'https://www.thoangacoustic.com/en':'https://www.thoangacoustic.com/');
+  window.location.assign(nextLanguage==='en'?'https://www.thoangacoustic.com/en/':'https://www.thoangacoustic.com/');
 });
 closeBtn.addEventListener('click',closePost);
 modal.addEventListener('click',e=>{if(e.target===modal)closePost();});

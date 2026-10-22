@@ -47,7 +47,7 @@ function applyLanguage(nextLang = null) {
 langButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     const nextLanguage = btn.textContent.trim() === 'EN' ? 'en' : 'vi';
-    window.location.assign(`https://www.thoangacoustic.com/${nextLanguage === 'en' ? 'en' : 'vn'}`);
+    window.location.assign(nextLanguage === 'en' ? 'https://www.thoangacoustic.com/en' : 'https://www.thoangacoustic.com/');
   });
 });
 

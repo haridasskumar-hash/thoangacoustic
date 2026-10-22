@@ -179,11 +179,8 @@ function render(){
   });
 }
 langBtn.addEventListener('click',()=>{
-  language=language==='vi'?'en':'vi';
-  document.documentElement.lang=language;
-  document.querySelectorAll('[data-vi][data-en]').forEach(el=>el.textContent=el.dataset[language]);
-  langBtn.textContent=language==='vi'?'EN':'VI';
-  render();
+  const nextLanguage=langBtn.textContent.trim()==='EN'?'en':'vi';
+  window.location.assign(`https://www.thoangacoustic.com/${nextLanguage==='en'?'en':'vn'}`);
 });
 closeBtn.addEventListener('click',closePost);
 modal.addEventListener('click',e=>{if(e.target===modal)closePost();});

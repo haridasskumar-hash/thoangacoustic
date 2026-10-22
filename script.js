@@ -29,7 +29,9 @@ if (nav) {
   });
 }
 
-let currentLanguage = document.documentElement.lang === 'en' ? 'en' : 'vi';
+const requestedLanguage = new URLSearchParams(window.location.search).get('lang');
+let currentLanguage = requestedLanguage === 'en' || (requestedLanguage !== 'vi' && document.documentElement.lang === 'en') ? 'en' : 'vi';
+document.documentElement.lang = currentLanguage;
 function applyLanguage(nextLang = null) {
   currentLanguage = nextLang || (currentLanguage === 'vi' ? 'en' : 'vi');
   document.documentElement.lang = currentLanguage;
@@ -44,11 +46,8 @@ function applyLanguage(nextLang = null) {
 }
 langButtons.forEach(btn => {
   btn.addEventListener('click', () => {
-    applyLanguage();
-    if (window.matchMedia('(max-width: 930px)').matches) {
-      closeMobileNavMenu();
-    }
-    window.setTimeout(refreshLocalizedContent, 0);
+    const nextLanguage = btn.textContent.trim() === 'EN' ? 'en' : 'vi';
+    window.location.assign(`https://www.thoangacoustic.com/${nextLanguage === 'en' ? 'en' : 'vn'}`);
   });
 });
 
@@ -569,4 +568,8 @@ Notes: ${data.get('notes') || '-'}`
     );
     window.location.href = `mailto:thoangacoustic@gmail.com?subject=${subject}&body=${body}`;
   });
+}
+
+if (requestedLanguage === 'en') {
+  applyLanguage('en');
 }

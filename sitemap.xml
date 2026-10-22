@@ -9,6 +9,12 @@
        <priority>0.8000</priority>
   </url>
   <url>
+       <loc>https://www.thoangacoustic.com/en</loc>
+       <lastmod>2026-10-22T00:00:00+00:00</lastmod>
+       <changefreq>daily</changefreq>
+       <priority>0.8000</priority>
+  </url>
+  <url>
        <loc>https://www.thoangacoustic.com/menu.html</loc>
        <lastmod>2026-08-19T00:00:00+00:00</lastmod>
        <changefreq>daily</changefreq>

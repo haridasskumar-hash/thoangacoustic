@@ -89,7 +89,10 @@
 </script>
 <script>
 const posts = Array.isArray(window.THOANG_BLOG) ? window.THOANG_BLOG : [];
-let language = 'vi';
+let language = new URLSearchParams(location.search).get('lang') === 'en' ? 'en' : 'vi';
+document.documentElement.lang = language;
+document.querySelectorAll('[data-vi][data-en]').forEach(el=>el.textContent=el.dataset[language]);
+document.querySelector('.lang-btn').textContent = language === 'en' ? 'VI' : 'EN';
 const list = document.querySelector('#blogList');
 const empty = document.querySelector('#blogEmpty');
 const langBtn = document.querySelector('.lang-btn');

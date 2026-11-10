@@ -238,7 +238,7 @@ window.THOANG_EVENTS = [
     "id": "event-1794325686812",
     "titleVi": "💛 HOW DEEP IS YOUR LOVE - US/UK Hits| 11.11.2026",
     "titleEn": "💛 HOW DEEP IS YOUR LOVE – US/UK HITS | 11.11.2026",
-    "date": "0006-02-02",
+    "date": "2026-11-11",
     "time": "20:45",
     "endTime": "22:15",
     "artists": "",

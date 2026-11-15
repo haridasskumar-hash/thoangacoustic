@@ -177,6 +177,7 @@ footer img{width:92px}
 .calendar-toolbar h3{font-family:"Cormorant Garamond",serif;font-size:35px;font-weight:500;margin:0;text-transform:capitalize}
 .calendar-arrow{width:44px;height:44px;border-radius:50%;border:1px solid rgba(36,21,15,.3);background:transparent;color:#24150f;cursor:pointer;font-size:20px}
 .calendar-layout{display:grid;grid-template-columns:1.35fr .65fr;gap:28px;align-items:start}
+.calendar-main{min-width:0}
 .calendar-board{border:1px solid rgba(36,21,15,.18);background:rgba(255,255,255,.23)}
 .calendar-weekdays,.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr)}
 .calendar-weekdays{border-bottom:1px solid rgba(36,21,15,.16)}
@@ -186,6 +187,7 @@ footer img{width:92px}
 .calendar-day.outside{opacity:.25}
 .calendar-day.has-event{cursor:pointer;background:rgba(111,32,39,.06)}
 .calendar-day.has-event:hover,.calendar-day.selected{background:#6f2027;color:#fff}
+.calendar-day:focus-visible,.calendar-arrow:focus-visible{outline:2px solid #6f2027;outline-offset:2px}
 .calendar-date{font-family:"Cormorant Garamond",serif;font-size:22px}
 .calendar-dot{position:absolute;left:10px;bottom:10px;width:8px;height:8px;border-radius:50%;background:#8b542f}
 .calendar-day.has-event:hover .calendar-dot,.calendar-day.selected .calendar-dot{background:#e8d3ad}

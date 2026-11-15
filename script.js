@@ -216,8 +216,12 @@ const calendarNext = document.querySelector('#calendarNext');
 const eventList = document.querySelector('#eventList');
 const eventCount = document.querySelector('#eventCount');
 const emptyEvents = document.querySelector('#emptyEvents');
+const calendarWeekdays = document.querySelector('.calendar-weekdays');
+const sharedScript = document.querySelector('script[src*="script.js"]');
+const eventDataPath = sharedScript ? new URL('./events-data.js', sharedScript.src).href : './events-data.js';
 
 let calendarCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let selectedCalendarDate = '';
 
 function activeLanguage() {
   return document.documentElement.lang === 'en' ? 'en' : 'vi';
@@ -510,14 +514,63 @@ function renderEventList(events) {
       if (event.target.closest('a')) return;
       const eventDate = new Date(`${item.date}T00:00:00`);
       calendarCursor = new Date(eventDate.getFullYear(), eventDate.getMonth(), 1);
-      renderCalendar(item.date);
+      selectedCalendarDate = item.date;
+      renderCalendar();
     });
     eventList.appendChild(article);
   });
 }
 
 function renderCalendar() {
+  const locale = activeLanguage() === 'en' ? 'en-GB' : 'vi-VN';
   const today = new Date(); today.setHours(0,0,0,0);
+  const year = calendarCursor.getFullYear();
+  const month = calendarCursor.getMonth();
+  const monthStart = new Date(year, month, 1);
+  const monthEnd = new Date(year, month + 1, 0);
+  const monthLabel = new Intl.DateTimeFormat(locale, {month:'long', year:'numeric'}).format(monthStart);
+  if (calendarMonth) calendarMonth.textContent = monthLabel;
+
+  if (calendarWeekdays) {
+    const mondayFirst = [1, 2, 3, 4, 5, 6, 0];
+    calendarWeekdays.innerHTML = mondayFirst.map(day =>
+      `<span>${new Intl.DateTimeFormat(locale, {weekday:'short'}).format(new Date(2024, 0, 7 + day))}</span>`
+    ).join('');
+  }
+
+  if (calendarGrid) {
+    calendarGrid.innerHTML = '';
+    const offset = (monthStart.getDay() + 6) % 7;
+    const cellCount = Math.ceil((offset + monthEnd.getDate()) / 7) * 7;
+    const eventsByDate = new Map();
+    eventData.forEach(item => {
+      if (!eventsByDate.has(item.date)) eventsByDate.set(item.date, []);
+      eventsByDate.get(item.date).push(item);
+    });
+    const todayKey = localDateKey(today);
+
+    for (let index = 0; index < cellCount; index += 1) {
+      const date = new Date(year, month, index - offset + 1);
+      const dateKey = localDateKey(date);
+      const inMonth = date.getMonth() === month;
+      const dayEvents = eventsByDate.get(dateKey) || [];
+      const isSelected = selectedCalendarDate ? dateKey === selectedCalendarDate : dateKey === todayKey;
+      const day = document.createElement('button');
+      day.type = 'button';
+      day.className = `calendar-day${inMonth ? '' : ' outside'}${dayEvents.length ? ' has-event' : ''}${isSelected ? ' selected' : ''}`;
+      day.disabled = !inMonth;
+      day.setAttribute('role', 'gridcell');
+      day.setAttribute('aria-pressed', String(isSelected));
+      day.setAttribute('aria-label', `${new Intl.DateTimeFormat(locale, {dateStyle:'full'}).format(date)}${dayEvents.length ? `, ${dayEvents.map(eventTitle).join(', ')}` : ''}`);
+      day.innerHTML = `<span class="calendar-date">${date.getDate()}</span>${dayEvents.length ? `<span class="calendar-dot"></span><span class="calendar-event-title">${eventTitle(dayEvents[0])}</span>` : ''}`;
+      day.addEventListener('click', () => {
+        selectedCalendarDate = dateKey;
+        renderCalendar();
+      });
+      calendarGrid.appendChild(day);
+    }
+  }
+
   const upcomingEvents = [...eventData]
     .filter(item => {
       const d = new Date(`${item.date}T00:00:00`);
@@ -525,7 +578,25 @@ function renderCalendar() {
     })
     .sort((a,b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time))
     .slice(0, 3);
-  renderEventList(upcomingEvents);
+  const selectedEvents = selectedCalendarDate
+    ? eventData.filter(item => item.date === selectedCalendarDate)
+    : upcomingEvents;
+  renderEventList(selectedEvents);
+}
+
+if (calendarPrev) {
+  calendarPrev.addEventListener('click', () => {
+    calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() - 1, 1);
+    selectedCalendarDate = '';
+    renderCalendar();
+  });
+}
+if (calendarNext) {
+  calendarNext.addEventListener('click', () => {
+    calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + 1, 1);
+    selectedCalendarDate = '';
+    renderCalendar();
+  });
 }
 
 if (cocktailsCards) {
@@ -541,7 +612,7 @@ if (cocktailsCards) {
 if (eventList) {
   renderCalendar();
   loadWhenNear(eventList, () => {
-    loadPageDataScript('./events-data.js', 'THOANG_EVENTS')
+    loadPageDataScript(eventDataPath, 'THOANG_EVENTS')
       .then(data => {
         eventData = data;
         renderCalendar();

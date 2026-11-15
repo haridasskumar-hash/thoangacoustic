@@ -144,7 +144,18 @@
         </p>
       </div>
 
-      <div class="calendar-list reveal">
+      <div class="calendar-layout reveal">
+        <div class="calendar-main">
+          <div class="calendar-toolbar">
+            <button id="calendarPrev" class="calendar-arrow" type="button" aria-label="Previous month">←</button>
+            <h3 id="calendarMonth" aria-live="polite"></h3>
+            <button id="calendarNext" class="calendar-arrow" type="button" aria-label="Next month">→</button>
+          </div>
+          <div class="calendar-board" role="grid" aria-label="Event calendar">
+            <div class="calendar-weekdays" aria-hidden="true"></div>
+            <div id="calendarGrid" class="calendar-grid"></div>
+          </div>
+        </div>
         <aside class="upcoming-panel">
           <div class="upcoming-head">
             <span data-vi="SỰ KIỆN SẮP TỚI" data-en="UPCOMING EVENTS">SỰ KIỆN SẮP TỚI</span>
